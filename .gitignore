@@ -1,0 +1,17 @@
+# editor
+.idea/
+.vscode/
+
+# os
+.DS_Store
+Thumbs.db
+
+# temp
+*.log
+*.tmp
+tmp/
+
+# other
+AGENTS.md
+spec/
+
