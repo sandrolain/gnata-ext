@@ -19,6 +19,7 @@ import (
 	"hash"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/recolabs/gnata"
 )
 
@@ -35,14 +36,11 @@ func All() map[string]gnata.CustomFunc {
 // Generates a random UUID v4.
 func UUID() gnata.CustomFunc {
 	return func(_ []any, _ any) (any, error) {
-		b := make([]byte, 16)
-		if _, err := rand.Read(b); err != nil {
+		u, err := uuid.NewRandomFromReader(rand.Reader)
+		if err != nil {
 			return nil, fmt.Errorf("$uuid: %w", err)
 		}
-		b[6] = (b[6] & 0x0f) | 0x40
-		b[8] = (b[8] & 0x3f) | 0x80
-		return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
-			b[0:4], b[4:6], b[6:8], b[8:10], b[10:16]), nil
+		return u.String(), nil
 	}
 }
 
