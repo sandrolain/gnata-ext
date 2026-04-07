@@ -14,10 +14,15 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extcrypto"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extdatetime"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extformat"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extgeo"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extjson"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extnet"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnumeric"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extobject"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extpath"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extstring"
 	"github.com/sandrolain/gnata-ext/pkg/ext/exttypes"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extvalidate"
 )
 
 // AllFuncs returns a merged map of all extension functions from every sub-package.
@@ -28,10 +33,15 @@ func AllFuncs() map[string]gnata.CustomFunc {
 		extcrypto.All(),
 		extdatetime.All(),
 		extformat.All(),
+		extgeo.All(),
+		extjson.All(),
+		extnet.All(),
 		extnumeric.All(),
 		extobject.All(),
+		extpath.All(),
 		extstring.All(),
 		exttypes.All(),
+		extvalidate.All(),
 	}
 	merged := make(map[string]gnata.CustomFunc)
 	for _, m := range sources {

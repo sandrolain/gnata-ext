@@ -2,7 +2,7 @@
 
 Extended JSONata functions for [gnata](https://github.com/RecoLabs/gnata) — the Go port of JSONata 2.x.
 
-`gnata-ext` ports and adapts the extension functions from the [gosonata](https://github.com/blues/gosonata) `pkg/ext` library to gnata's `CustomFunc` API, providing over **60 additional functions** grouped into eight domain packages.
+`gnata-ext` ports and adapts the extension functions from the [gosonata](https://github.com/blues/gosonata) `pkg/ext` library to gnata's `CustomFunc` API, providing over **110 additional functions** grouped into thirteen domain packages.
 
 ---
 
@@ -188,6 +188,70 @@ Supported units: `year`, `month`, `day`, `hour`, `minute`, `second`, `millisecon
 | `$default(v, d)` | *v* if non-nil, otherwise *d* |
 | `$identity(v)` | Returns *v* unchanged |
 
+### extpath — Dot-path access
+
+| JSONata function | Description |
+|---|---|
+| `$get(obj, path [, default])` | Read a nested value by dot-path |
+| `$set(obj, path, value)` | Immutable write at dot-path |
+| `$del(obj, path)` | Immutable delete at dot-path |
+| `$has(obj, path)` | True if path exists and is non-nil |
+| `$flattenObj(obj [, sep])` | `{"a":{"b":1}}` → `{"a.b":1}` |
+| `$expandObj(obj [, sep])` | `{"a.b":1}` → `{"a":{"b":1}}` |
+
+### extvalidate — Input validation
+
+| JSONata function | Description |
+|---|---|
+| `$isEmail(str)` | RFC 5322 simplified email format |
+| `$isURL(str)` | Valid http/https/ftp URL |
+| `$isUUID(str)` | UUID v1–v5 format |
+| `$isIPv4(str)` | IPv4 address |
+| `$isIPv6(str)` | IPv6 address |
+| `$isAlpha(str)` | Only Unicode letters |
+| `$isAlphanumeric(str)` | Only Unicode letters and digits |
+| `$isNumericStr(str)` | Parses as a number |
+| `$matchesRegex(str, pattern)` | Matches RE2 pattern |
+| `$inSet(v, set)` | Value is in array set |
+| `$minLen(str, n)` | Rune length ≥ n |
+| `$maxLen(str, n)` | Rune length ≤ n |
+| `$minItems(arr, n)` | Array length ≥ n |
+| `$maxItems(arr, n)` | Array length ≤ n |
+
+### extjson — JSON operations
+
+| JSONata function | Description |
+|---|---|
+| `$jsonParse(str)` | Parse JSON string into a value |
+| `$jsonStringify(v [, indent])` | Serialise value to JSON string |
+| `$jsonDiff(a, b)` | Differences as a JSON Patch array |
+| `$jsonPatch(obj, ops)` | Apply RFC 6902 JSON Patch operations |
+| `$jsonPointer(obj, pointer)` | Resolve RFC 6901 JSON Pointer |
+
+### extgeo — Geospatial utilities
+
+All calculations use the WGS-84 mean Earth radius (6 371 km). Coordinates are decimal degrees.
+
+| JSONata function | Description |
+|---|---|
+| `$haversine(lat1, lon1, lat2, lon2)` | Great-circle distance in km |
+| `$bearing(lat1, lon1, lat2, lon2)` | Initial bearing in degrees (0–360) |
+| `$geoFormat(lat, lon [, format])` | Format as `"decimal"` or `"dms"` |
+| `$geoParse(str)` | Parse `"lat, lon"` string → `{lat, lon}` |
+| `$inBoundingBox(lat, lon, minLat, minLon, maxLat, maxLon)` | Point-in-bbox test |
+| `$geoDistance(point, points)` | Array of distances from point to each in points (km) |
+
+### extnet — Network utilities
+
+| JSONata function | Description |
+|---|---|
+| `$ipVersion(str)` | Returns `4`, `6`, or `-1` |
+| `$isPrivateIP(str)` | RFC1918 / loopback / link-local |
+| `$ipToInt(str)` | IPv4 → uint32 as float64 |
+| `$intToIP(n)` | uint32 as float64 → IPv4 string |
+| `$ipInCIDR(ip, cidr)` | True if ip is in CIDR block |
+| `$expandCIDR(cidr)` | Network info object for CIDR block |
+
 ---
 
 ## Selective registration
@@ -207,6 +271,8 @@ for k, v := range extnumeric.All() { funcs[k] = v }
 
 env := gnata.NewCustomEnv(funcs)
 ```
+
+Full per-package documentation is in [docs/FUNCTIONS.md](docs/FUNCTIONS.md).
 
 Individual functions can also be retrieved directly via their exported Go constructors (e.g. `extcrypto.UUID()`, `extnumeric.Median()`).
 

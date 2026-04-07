@@ -185,6 +185,24 @@ $toCSV(
 
 Both `extformat` and `extstring` register a `template` function with identical behaviour. Because `extstring` is merged after `extformat`, the `extstring` implementation wins when you use `ext.AllFuncs()`. If you need a specific implementation, build the map manually:
 
+`ext.AllFuncs()` merges all sub-packages in this order:
+
+1. `extarray`
+2. `extcrypto`
+3. `extdatetime`
+4. `extformat`
+5. `extgeo`
+6. `extjson`
+7. `extnet`
+8. `extnumeric`
+9. `extobject`
+10. `extpath`
+11. `extstring`
+12. `exttypes`
+13. `extvalidate`
+
+If you need a specific function implementation from a particular package, build the map manually:
+
 ```go
 funcs := extformat.All()
 // Override "template" with a custom implementation:

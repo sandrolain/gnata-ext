@@ -16,6 +16,11 @@ All functions are registered as JSONata custom functions and are called with a l
 - [extobject — Object utilities](#extobject)
 - [extstring — String utilities](#extstring)
 - [exttypes — Type inspection](#exttypes)
+- [extpath — Dot-path access](#extpath)
+- [extvalidate — Input validation](#extvalidate)
+- [extjson — JSON operations](#extjson)
+- [extgeo — Geospatial utilities](#extgeo)
+- [extnet — Network utilities](#extnet)
 
 ---
 
@@ -823,4 +828,502 @@ Returns *v* unchanged. Useful as a no-op placeholder in pipelines.
 ```jsonata
 $identity(42)          /* → 42 */
 $identity({"k": "v"})  /* → {"k": "v"} */
+```
+
+---
+
+## extpath
+
+**Import path:** `github.com/sandrolain/gnata-ext/pkg/ext/extpath`
+
+Provides immutable read/write access to nested objects via dot-path strings (e.g. `"a.b.c"`).
+
+### `$get(obj, path [, default])`
+
+Reads a nested value by dot-path. Returns *default* (or `null`) if any segment is missing.
+
+```jsonata
+$get({"a": {"b": 42}}, "a.b")          /* → 42 */
+$get({"a": 1}, "a.b.c", "missing")     /* → "missing" */
+```
+
+---
+
+### `$set(obj, path, value)`
+
+Returns a new object with *value* written at *path*. Intermediate objects are created as needed. The original object is not mutated.
+
+```jsonata
+$set({"a": 1}, "b.c", 2)
+/* → {"a": 1, "b": {"c": 2}} */
+
+$set({"a": {"x": 1}}, "a.y", 2)
+/* → {"a": {"x": 1, "y": 2}} */
+```
+
+---
+
+### `$del(obj, path)`
+
+Returns a new object with the value at *path* removed. The original is not mutated.
+
+```jsonata
+$del({"a": 1, "b": 2}, "b")       /* → {"a": 1} */
+$del({"a": {"b": 1, "c": 2}}, "a.b")
+/* → {"a": {"c": 2}} */
+```
+
+---
+
+### `$has(obj, path)`
+
+Returns `true` if the path exists in *obj* and its value is non-null.
+
+```jsonata
+$has({"a": {"b": 1}}, "a.b")   /* → true */
+$has({"a": 1}, "a.b")          /* → false */
+```
+
+---
+
+### `$flattenObj(obj [, sep])`
+
+Flattens a nested object to a single level, joining keys with *sep* (default `"."`).
+
+```jsonata
+$flattenObj({"a": {"b": {"c": 1}, "d": 2}})
+/* → {"a.b.c": 1, "a.d": 2} */
+
+$flattenObj({"a": {"b": 1}}, "/")
+/* → {"a/b": 1} */
+```
+
+---
+
+### `$expandObj(obj [, sep])`
+
+Expands a flat object with compound keys back to a nested structure. Inverse of `$flattenObj`.
+
+```jsonata
+$expandObj({"a.b.c": 1, "a.d": 2})
+/* → {"a": {"b": {"c": 1}, "d": 2}} */
+```
+
+---
+
+## extvalidate
+
+**Import path:** `github.com/sandrolain/gnata-ext/pkg/ext/extvalidate`
+
+All functions return `true`/`false`. On invalid input types (non-string when a string is expected, etc.) they return `false` rather than erroring, making them safe in conditional expressions.
+
+> **Regex safety:** `$matchesRegex` uses Go's RE2-based `regexp` package, which guarantees linear-time matching and is inherently safe against ReDoS attacks.
+
+### `$isEmail(str)`
+
+Returns `true` if *str* matches a simplified RFC 5322 email format.
+
+```jsonata
+$isEmail("user@example.com")          /* → true */
+$isEmail("user+tag@sub.example.co")   /* → true */
+$isEmail("notanemail")                /* → false */
+```
+
+---
+
+### `$isURL(str)`
+
+Returns `true` if *str* is a valid URL with scheme `http`, `https`, or `ftp`.
+
+```jsonata
+$isURL("https://example.com/path?q=1")   /* → true */
+$isURL("ftp://files.example.com")        /* → true */
+$isURL("not-a-url")                      /* → false */
+```
+
+---
+
+### `$isUUID(str)`
+
+Returns `true` if *str* matches a UUID v1–v5 format (case-insensitive).
+
+```jsonata
+$isUUID("550e8400-e29b-41d4-a716-446655440000")   /* → true */
+$isUUID("not-a-uuid")                             /* → false */
+```
+
+---
+
+### `$isIPv4(str)`
+
+```jsonata
+$isIPv4("192.168.1.1")   /* → true */
+$isIPv4("::1")           /* → false */
+```
+
+---
+
+### `$isIPv6(str)`
+
+```jsonata
+$isIPv6("2001:db8::1")     /* → true */
+$isIPv6("192.168.1.1")     /* → false */
+```
+
+---
+
+### `$isAlpha(str)`
+
+Returns `true` if *str* contains only Unicode letters (empty string → `false`).
+
+```jsonata
+$isAlpha("Hello")      /* → true */
+$isAlpha("hello123")   /* → false */
+```
+
+---
+
+### `$isAlphanumeric(str)`
+
+Returns `true` if *str* contains only Unicode letters and digits.
+
+```jsonata
+$isAlphanumeric("hello123")    /* → true */
+$isAlphanumeric("hello 123")   /* → false */
+```
+
+---
+
+### `$isNumericStr(str)`
+
+Returns `true` if *str* can be parsed as a number.
+
+```jsonata
+$isNumericStr("3.14")     /* → true */
+$isNumericStr("-1.5e10")  /* → true */
+$isNumericStr("abc")      /* → false */
+```
+
+---
+
+### `$matchesRegex(str, pattern)`
+
+Returns `true` if *str* fully or partially matches the RE2 *pattern*.
+
+```jsonata
+$matchesRegex("hello123", "^\w+$")   /* → true */
+$matchesRegex("hello world", "^\w+$") /* → false */
+```
+
+---
+
+### `$inSet(v, set)`
+
+Returns `true` if *v* is present in the array *set* (strict equality).
+
+```jsonata
+$inSet("b", ["a", "b", "c"])   /* → true */
+$inSet("z", ["a", "b", "c"])   /* → false */
+```
+
+---
+
+### `$minLen(str, n)`
+
+Returns `true` if the rune (Unicode character) length of *str* is ≥ *n*.
+
+```jsonata
+$minLen("hello", 3)   /* → true */
+$minLen("hi", 5)      /* → false */
+```
+
+---
+
+### `$maxLen(str, n)`
+
+Returns `true` if the rune length of *str* is ≤ *n*.
+
+```jsonata
+$maxLen("hi", 5)       /* → true */
+$maxLen("toolong", 3)  /* → false */
+```
+
+---
+
+### `$minItems(arr, n)`
+
+Returns `true` if the array length of *arr* is ≥ *n*.
+
+```jsonata
+$minItems([1, 2, 3], 2)   /* → true */
+$minItems([1], 2)          /* → false */
+```
+
+---
+
+### `$maxItems(arr, n)`
+
+Returns `true` if the array length of *arr* is ≤ *n*.
+
+```jsonata
+$maxItems([1, 2], 5)    /* → true */
+$maxItems([1, 2, 3, 4, 5, 6], 5)   /* → false */
+```
+
+---
+
+## extjson
+
+**Import path:** `github.com/sandrolain/gnata-ext/pkg/ext/extjson`
+
+### `$jsonParse(str)`
+
+Parses a JSON string and returns the corresponding gnata value. Errors on invalid JSON.
+
+```jsonata
+$jsonParse("{\"a\":1,\"b\":true}")
+/* → {"a": 1, "b": true} */
+
+$jsonParse("[1, 2, 3]")
+/* → [1, 2, 3] */
+```
+
+---
+
+### `$jsonStringify(v [, indent])`
+
+Serialises *v* to a JSON string. If *indent* is provided (a string, e.g. `"  "`), the output is pretty-printed.
+
+```jsonata
+$jsonStringify({"x": 1})          /* → "{\"x\":1}" */
+$jsonStringify({"x": 1}, "  ")    /* pretty-printed */
+```
+
+---
+
+### `$jsonDiff(a, b)`
+
+Returns a JSON Patch-compatible array of `{op, path, value}` operations describing what changed between *a* and *b*. Uses RFC 6902 operation names (`add`, `remove`, `replace`). Paths use JSON Pointer notation.
+
+```jsonata
+$jsonDiff({"x": 1, "y": 2}, {"x": 1, "y": 3, "z": 4})
+/* → [
+     {"op": "replace", "path": "/y", "value": 3},
+     {"op": "add",     "path": "/z", "value": 4}
+   ] */
+```
+
+---
+
+### `$jsonPatch(obj, ops)`
+
+Applies RFC 6902 JSON Patch operations to *obj* (immutable — returns a new value). Supported operations: `add`, `remove`, `replace`, `move`, `copy`, `test`.
+
+```jsonata
+$jsonPatch(
+  {"a": 1, "b": 2},
+  [
+    {"op": "replace", "path": "/a", "value": 10},
+    {"op": "remove",  "path": "/b"},
+    {"op": "add",     "path": "/c", "value": 3}
+  ]
+)
+/* → {"a": 10, "c": 3} */
+```
+
+The `"test"` operation throws an error if the path value does not match, which causes the entire patch to fail.
+
+---
+
+### `$jsonPointer(obj, pointer)`
+
+Resolves an RFC 6901 JSON Pointer against *obj*. Supports traversal of both objects and arrays.
+
+```jsonata
+$jsonPointer({"a": {"b": [10, 20, 30]}}, "/a/b/1")   /* → 20 */
+$jsonPointer({"a": 1}, "/a")                          /* → 1 */
+```
+
+---
+
+## extgeo
+
+**Import path:** `github.com/sandrolain/gnata-ext/pkg/ext/extgeo`
+
+All calculations use the WGS-84 mean Earth radius **6 371 km**. Coordinates are always **decimal degrees**. No external dependencies — pure `math` stdlib.
+
+### `$haversine(lat1, lon1, lat2, lon2)`
+
+Returns the great-circle distance between two points in **kilometres**.
+
+```jsonata
+/* London → Paris ≈ 340 km */
+$haversine(51.5074, -0.1278, 48.8566, 2.3522)
+/* → ~340.6 */
+
+/* Same point */
+$haversine(48.0, 2.0, 48.0, 2.0)   /* → 0 */
+```
+
+---
+
+### `$bearing(lat1, lon1, lat2, lon2)`
+
+Returns the initial bearing from point 1 to point 2 in **degrees**, clockwise from north (0–360).
+
+```jsonata
+$bearing(0, 0, 0, 1)    /* → ~90  (east) */
+$bearing(0, 0, 1, 0)    /* → ~0   (north) */
+```
+
+---
+
+### `$geoFormat(lat, lon [, format])`
+
+Formats a coordinate pair as a string.
+
+- `"decimal"` (default): `"48.8566, 2.3522"` — 4 decimal places
+- `"dms"`: degrees/minutes/seconds with cardinal directions, e.g. `"48°51'23.76\"N 2°21'7.92\"E"`
+
+```jsonata
+$geoFormat(48.8566, 2.3522)           /* → "48.8566, 2.3522" */
+$geoFormat(48.8566, 2.3522, "dms")    /* → "48°51'23.76\"N 2°21'7.92\"E" */
+```
+
+---
+
+### `$geoParse(str)`
+
+Parses a `"lat, lon"` decimal string and returns `{lat, lon}`.
+
+```jsonata
+$geoParse("48.8566, 2.3522")
+/* → {"lat": 48.8566, "lon": 2.3522} */
+```
+
+---
+
+### `$inBoundingBox(lat, lon, minLat, minLon, maxLat, maxLon)`
+
+Returns `true` if the point (`lat`, `lon`) lies within the axis-aligned bounding box.
+
+```jsonata
+/* Paris inside Europe bbox */
+$inBoundingBox(48.8566, 2.3522, 36.0, -10.0, 71.0, 40.0)   /* → true */
+```
+
+---
+
+### `$geoDistance(point, points)`
+
+Computes the haversine distance from *point* to each element of *points* and returns an array of distances in **kilometres**.
+
+- *point*: `{"lat": float, "lon": float}`
+- *points*: array of `{"lat": float, "lon": float}`
+
+```jsonata
+$geoDistance(
+  {"lat": 51.5074, "lon": -0.1278},
+  [
+    {"lat": 48.8566, "lon": 2.3522},
+    {"lat": 52.5200, "lon": 13.4050}
+  ]
+)
+/* → [~340.6, ~930.9] */
+```
+
+---
+
+## extnet
+
+**Import path:** `github.com/sandrolain/gnata-ext/pkg/ext/extnet`
+
+### `$ipVersion(str)`
+
+Returns `4` for IPv4, `6` for IPv6, or `-1` if *str* is not a valid IP address.
+
+```jsonata
+$ipVersion("192.168.1.1")   /* → 4 */
+$ipVersion("::1")           /* → 6 */
+$ipVersion("not-an-ip")     /* → -1 */
+```
+
+---
+
+### `$isPrivateIP(str)`
+
+Returns `true` if *str* is a private, loopback, or link-local address:
+
+- RFC 1918: `10/8`, `172.16/12`, `192.168/16`
+- Loopback: `127/8`, `::1`
+- Link-local: `169.254/16`, `fe80::/10`
+
+```jsonata
+$isPrivateIP("192.168.1.1")   /* → true */
+$isPrivateIP("8.8.8.8")       /* → false */
+$isPrivateIP("::1")           /* → true */
+```
+
+---
+
+### `$ipToInt(str)`
+
+Converts an IPv4 address string to its 32-bit unsigned integer representation (returned as `float64`). Only IPv4 is supported.
+
+```jsonata
+$ipToInt("0.0.0.0")           /* → 0 */
+$ipToInt("255.255.255.255")   /* → 4294967295 */
+$ipToInt("192.168.1.1")       /* → 3232235777 */
+```
+
+---
+
+### `$intToIP(n)`
+
+Converts a 32-bit unsigned integer (as `float64`) back to an IPv4 address string.
+
+```jsonata
+$intToIP(0)           /* → "0.0.0.0" */
+$intToIP(3232235777)  /* → "192.168.1.1" */
+```
+
+---
+
+### `$ipInCIDR(ip, cidr)`
+
+Returns `true` if *ip* is contained within the *cidr* block.
+
+```jsonata
+$ipInCIDR("192.168.1.100", "192.168.1.0/24")   /* → true */
+$ipInCIDR("10.0.0.1",      "192.168.1.0/24")   /* → false */
+```
+
+---
+
+### `$expandCIDR(cidr)`
+
+Returns a network-info object for the CIDR block.
+
+**IPv4** — returns `{network, broadcast, first, last, count}`:
+
+```jsonata
+$expandCIDR("192.168.1.0/24")
+/* → {
+     "network":   "192.168.1.0",
+     "broadcast": "192.168.1.255",
+     "first":     "192.168.1.1",
+     "last":      "192.168.1.254",
+     "count":     256
+   } */
+```
+
+**IPv6** — returns `{network, first, last}` (no broadcast, count omitted due to scale):
+
+```jsonata
+$expandCIDR("2001:db8::/32")
+/* → {
+     "network": "2001:db8::",
+     "first":   "2001:db8::",
+     "last":    "2001:db8:ffff:ffff:ffff:ffff:ffff:ffff"
+   } */
 ```
