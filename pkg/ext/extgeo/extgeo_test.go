@@ -137,7 +137,7 @@ func TestGeoDistance(t *testing.T) {
 
 	origin := map[string]any{"lat": float64(51.5074), "lon": float64(-0.1278)} // London
 	points := []any{
-		map[string]any{"lat": float64(48.8566), "lon": float64(2.3522)}, // Paris
+		map[string]any{"lat": float64(48.8566), "lon": float64(2.3522)},  // Paris
 		map[string]any{"lat": float64(51.5074), "lon": float64(-0.1278)}, // London itself
 	}
 
@@ -164,5 +164,129 @@ func TestAll(t *testing.T) {
 		if _, ok := all[name]; !ok {
 			t.Errorf("All() missing function: %q", name)
 		}
+	}
+}
+
+func TestHaversineErrors(t *testing.T) {
+	f := extgeo.Haversine()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("haversine: expected error for 0 args")
+	}
+	if _, err := f([]any{"bad", 0.0, 0.0, 0.0}, nil); err == nil {
+		t.Error("haversine: expected error for non-numeric arg")
+	}
+}
+
+func TestBearingErrors(t *testing.T) {
+	f := extgeo.Bearing()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("bearing: expected error for 0 args")
+	}
+	if _, err := f([]any{"bad", 0.0, 0.0, 0.0}, nil); err == nil {
+		t.Error("bearing: expected error for non-numeric arg")
+	}
+}
+
+func TestGeoFormatErrors(t *testing.T) {
+	f := extgeo.GeoFormat()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("geoFormat: expected error for 0 args")
+	}
+	if _, err := f([]any{"bad", 0.0}, nil); err == nil {
+		t.Error("geoFormat: expected error for non-numeric lat")
+	}
+	if _, err := f([]any{0.0, "bad"}, nil); err == nil {
+		t.Error("geoFormat: expected error for non-numeric lon")
+	}
+}
+
+func TestGeoFormatDMSSouth(t *testing.T) {
+	f := extgeo.GeoFormat()
+	// negative lat -> "S", negative lon -> "W"
+	got, err := f([]any{-33.8688, -70.6693, "dms"}, nil)
+	if err != nil {
+		t.Fatalf("geoFormat dms south: %v", err)
+	}
+	s := got.(string)
+	if len(s) == 0 {
+		t.Errorf("geoFormat dms south: empty result")
+	}
+}
+
+func TestGeoFormatDecimalDefault(t *testing.T) {
+	f := extgeo.GeoFormat()
+	// non-string format arg falls back to decimal
+	got, err := f([]any{48.8566, 2.3522, 42}, nil)
+	if err != nil {
+		t.Fatalf("geoFormat non-string format: %v", err)
+	}
+	s := got.(string)
+	if s != "48.8566, 2.3522" {
+		t.Errorf("geoFormat decimal default: got %q", s)
+	}
+}
+
+func TestGeoParseErrors(t *testing.T) {
+	f := extgeo.GeoParse()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("geoParse: expected error for 0 args")
+	}
+	if _, err := f([]any{42}, nil); err == nil {
+		t.Error("geoParse: expected error for non-string")
+	}
+	if _, err := f([]any{"no-comma"}, nil); err == nil {
+		t.Error("geoParse: expected error for missing comma")
+	}
+	if _, err := f([]any{"bad, 2.0"}, nil); err == nil {
+		t.Error("geoParse: expected error for invalid lat")
+	}
+	if _, err := f([]any{"48.8, bad"}, nil); err == nil {
+		t.Error("geoParse: expected error for invalid lon")
+	}
+}
+
+func TestInBoundingBoxErrors(t *testing.T) {
+	f := extgeo.InBoundingBox()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("inBoundingBox: expected error for 0 args")
+	}
+	if _, err := f([]any{"bad", 0.0, 0.0, 0.0, 1.0, 1.0}, nil); err == nil {
+		t.Error("inBoundingBox: expected error for non-numeric arg")
+	}
+}
+
+func TestGeoDistanceErrors(t *testing.T) {
+	f := extgeo.GeoDistance()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("geoDistance: expected error for 0 args")
+	}
+	// non-object origin
+	if _, err := f([]any{"not-obj", []any{}}, nil); err == nil {
+		t.Error("geoDistance: expected error for non-object origin")
+	}
+	// missing lat
+	if _, err := f([]any{map[string]any{"lon": 0.0}, []any{}}, nil); err == nil {
+		t.Error("geoDistance: expected error for missing origin lat")
+	}
+	// missing lon
+	if _, err := f([]any{map[string]any{"lat": 0.0}, []any{}}, nil); err == nil {
+		t.Error("geoDistance: expected error for missing origin lon")
+	}
+	// non-array points
+	origin := map[string]any{"lat": 0.0, "lon": 0.0}
+	if _, err := f([]any{origin, "not-array"}, nil); err == nil {
+		t.Error("geoDistance: expected error for non-array points")
+	}
+	// bad point in array
+	if _, err := f([]any{origin, []any{"bad"}}, nil); err == nil {
+		t.Error("geoDistance: expected error for non-object point")
+	}
+	// point missing lat
+	if _, err := f([]any{origin, []any{map[string]any{"lon": 0.0}}}, nil); err == nil {
+		t.Error("geoDistance: expected error for point missing lat")
+	}
+	// point missing lon
+	if _, err := f([]any{origin, []any{map[string]any{"lat": 0.0}}}, nil); err == nil {
+		t.Error("geoDistance: expected error for point missing lon")
 	}
 }

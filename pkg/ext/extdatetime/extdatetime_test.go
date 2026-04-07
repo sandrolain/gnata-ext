@@ -119,3 +119,202 @@ func TestAll(t *testing.T) {
 		}
 	}
 }
+
+// --- Additional coverage tests ---
+
+func TestDateAddAllUnits(t *testing.T) {
+	f := extdatetime.DateAdd()
+	tests := []struct {
+		amount float64
+		unit   string
+	}{
+		{1, "month"},
+		{1, "months"},
+		{1, "year"},
+		{1, "years"},
+		{1, "days"},
+		{1, "hours"},
+		{1, "minute"},
+		{1, "minutes"},
+		{1, "second"},
+		{1, "seconds"},
+		{1, "millisecond"},
+		{1, "milliseconds"},
+	}
+	for _, tc := range tests {
+		got, err := invoke(f, epoch, tc.amount, tc.unit)
+		if err != nil {
+			t.Errorf("dateAdd %q: unexpected error: %v", tc.unit, err)
+		}
+		if got.(float64) <= epoch {
+			t.Errorf("dateAdd %q: result should be > epoch", tc.unit)
+		}
+	}
+}
+
+func TestDateAddErrors(t *testing.T) {
+	f := extdatetime.DateAdd()
+
+	// too few args
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	// bad timestamp
+	_, err = invoke(f, "notanumber", 1.0, "day")
+	if err == nil {
+		t.Error("expected error for non-numeric timestamp")
+	}
+	// bad amount
+	_, err = invoke(f, epoch, "notanumber", "day")
+	if err == nil {
+		t.Error("expected error for non-numeric amount")
+	}
+	// bad unit type
+	_, err = invoke(f, epoch, 1.0, 42)
+	if err == nil {
+		t.Error("expected error for non-string unit")
+	}
+	// unknown unit
+	_, err = invoke(f, epoch, 1.0, "decade")
+	if err == nil {
+		t.Error("expected error for unknown unit")
+	}
+}
+
+func TestDateDiffAllUnits(t *testing.T) {
+	f := extdatetime.DateDiff()
+	t2 := epoch + 90*86400000 // +90 days (~3 months)
+
+	units := []string{"second", "seconds", "minute", "minutes", "hour", "hours", "month", "months", "year", "years"}
+	for _, unit := range units {
+		_, err := invoke(f, epoch, t2, unit)
+		if err != nil {
+			t.Errorf("dateDiff %q: unexpected error: %v", unit, err)
+		}
+	}
+}
+
+func TestDateDiffErrors(t *testing.T) {
+	f := extdatetime.DateDiff()
+
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad", epoch, "day")
+	if err == nil {
+		t.Error("expected error for bad t1")
+	}
+	_, err = invoke(f, epoch, "bad", "day")
+	if err == nil {
+		t.Error("expected error for bad t2")
+	}
+	_, err = invoke(f, epoch, epoch, 99)
+	if err == nil {
+		t.Error("expected error for non-string unit")
+	}
+	_, err = invoke(f, epoch, epoch, "decade")
+	if err == nil {
+		t.Error("expected error for unknown unit")
+	}
+}
+
+func TestDateDiffYMDNegative(t *testing.T) {
+	// dateDiffYMD is tested indirectly via DateDiff months/years
+	f := extdatetime.DateDiff()
+	// t2 < t1 — negative year/month diffs
+	earlier := epoch - 400*86400000
+	got, err := invoke(f, epoch, earlier, "year")
+	if err != nil {
+		t.Fatalf("dateDiff year negative: %v", err)
+	}
+	if got.(float64) >= 0 {
+		t.Errorf("expected negative year diff, got %v", got)
+	}
+	got, err = invoke(f, epoch, earlier, "month")
+	if err != nil {
+		t.Fatalf("dateDiff month negative: %v", err)
+	}
+	if got.(float64) >= 0 {
+		t.Errorf("expected negative month diff, got %v", got)
+	}
+}
+
+func TestDateComponentsErrors(t *testing.T) {
+	f := extdatetime.DateComponents()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad")
+	if err == nil {
+		t.Error("expected error for non-numeric timestamp")
+	}
+}
+
+func TestDateStartOfAllUnits(t *testing.T) {
+	f := extdatetime.DateStartOf()
+	for _, unit := range []string{"year", "month", "hour", "minute", "second"} {
+		got, err := invoke(f, epoch, unit)
+		if err != nil {
+			t.Errorf("dateStartOf %q: %v", unit, err)
+		}
+		if got.(float64) > epoch {
+			t.Errorf("dateStartOf %q: start should be <= epoch", unit)
+		}
+	}
+}
+
+func TestDateStartOfErrors(t *testing.T) {
+	f := extdatetime.DateStartOf()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad", "day")
+	if err == nil {
+		t.Error("expected error for bad timestamp")
+	}
+	_, err = invoke(f, epoch, 99)
+	if err == nil {
+		t.Error("expected error for non-string unit")
+	}
+	_, err = invoke(f, epoch, "decade")
+	if err == nil {
+		t.Error("expected error for unknown unit")
+	}
+}
+
+func TestDateEndOfAllUnits(t *testing.T) {
+	f := extdatetime.DateEndOf()
+	for _, unit := range []string{"year", "month", "hour", "minute", "second"} {
+		got, err := invoke(f, epoch, unit)
+		if err != nil {
+			t.Errorf("dateEndOf %q: %v", unit, err)
+		}
+		if got.(float64) < epoch {
+			t.Errorf("dateEndOf %q: end should be >= epoch", unit)
+		}
+	}
+}
+
+func TestDateEndOfErrors(t *testing.T) {
+	f := extdatetime.DateEndOf()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad", "day")
+	if err == nil {
+		t.Error("expected error for bad timestamp")
+	}
+	_, err = invoke(f, epoch, 99)
+	if err == nil {
+		t.Error("expected error for non-string unit")
+	}
+	_, err = invoke(f, epoch, "decade")
+	if err == nil {
+		t.Error("expected error for unknown unit")
+	}
+}

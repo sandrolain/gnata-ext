@@ -48,3 +48,32 @@ func TestNewEnv(t *testing.T) {
 		t.Fatal("NewEnv() returned nil")
 	}
 }
+
+func TestBuilderWithAllFuncs(t *testing.T) {
+	funcs := ext.NewEnvBuilder().WithAllFuncs().Build()
+	if len(funcs) == 0 {
+		t.Error("WithAllFuncs: expected non-empty")
+	}
+}
+
+func TestBuilderIndividualPackages(t *testing.T) {
+	b := ext.NewEnvBuilder()
+	_ = b.WithArrayFuncs()
+	_ = b.WithCryptoFuncs()
+	_ = b.WithDatetimeFuncs()
+	_ = b.WithFormatFuncs()
+	_ = b.WithGeoFuncs()
+	_ = b.WithJSONFuncs()
+	_ = b.WithNetFuncs()
+	_ = b.WithObjectFuncs()
+	_ = b.WithPathFuncs()
+	_ = b.WithTypesFuncs()
+	_ = b.WithValidateFuncs()
+	funcs := b.Build()
+	if _, ok := funcs["first"]; !ok {
+		t.Error("builder: missing 'first' from array package")
+	}
+	if _, ok := funcs["uuid"]; !ok {
+		t.Error("builder: missing 'uuid' from crypto package")
+	}
+}

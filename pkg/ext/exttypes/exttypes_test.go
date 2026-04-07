@@ -154,3 +154,116 @@ func TestAll(t *testing.T) {
 		}
 	}
 }
+
+func TestIsUndefined(t *testing.T) {
+	f := exttypes.IsUndefined()
+	// 0 args -> true
+	got, err := f([]any{}, nil)
+	if err != nil || !got.(bool) {
+		t.Errorf("isUndefined(no args): got %v, %v", got, err)
+	}
+	// nil arg -> true
+	got, _ = invoke(f, nil)
+	if !got.(bool) {
+		t.Errorf("isUndefined(nil): expected true")
+	}
+	// non-nil arg -> false
+	got, _ = invoke(f, "something")
+	if got.(bool) {
+		t.Errorf("isUndefined(string): expected false")
+	}
+}
+
+func TestIsStringNoArgs(t *testing.T) {
+	f := exttypes.IsString()
+	got, _ := f([]any{}, nil)
+	if got.(bool) {
+		t.Error("isString(no args): expected false")
+	}
+}
+
+func TestIsNumberNoArgs(t *testing.T) {
+	f := exttypes.IsNumber()
+	got, _ := f([]any{}, nil)
+	if got.(bool) {
+		t.Error("isNumber(no args): expected false")
+	}
+	// int64 variant
+	got, _ = invoke(f, int64(5))
+	if !got.(bool) {
+		t.Error("isNumber(int64): expected true")
+	}
+	// int variant
+	got, _ = invoke(f, int(5))
+	if !got.(bool) {
+		t.Error("isNumber(int): expected true")
+	}
+}
+
+func TestIsBooleanNoArgs(t *testing.T) {
+	f := exttypes.IsBoolean()
+	got, _ := f([]any{}, nil)
+	if got.(bool) {
+		t.Error("isBoolean(no args): expected false")
+	}
+}
+
+func TestIsArrayNoArgs(t *testing.T) {
+	f := exttypes.IsArray()
+	got, _ := f([]any{}, nil)
+	if got.(bool) {
+		t.Error("isArray(no args): expected false")
+	}
+}
+
+func TestIsObjectNoArgs(t *testing.T) {
+	f := exttypes.IsObject()
+	got, _ := f([]any{}, nil)
+	if got.(bool) {
+		t.Error("isObject(no args): expected false")
+	}
+}
+
+func TestIsNullNoArgs(t *testing.T) {
+	f := exttypes.IsNull()
+	got, _ := f([]any{}, nil)
+	if !got.(bool) {
+		t.Error("isNull(no args): expected true")
+	}
+}
+
+func TestIsEmptyDefault(t *testing.T) {
+	f := exttypes.IsEmpty()
+	// non-nil, non-string, non-array, non-object -> false
+	got, _ := invoke(f, 42.0)
+	if got.(bool) {
+		t.Error("isEmpty(42): expected false")
+	}
+	// no args -> true
+	got, _ = f([]any{}, nil)
+	if !got.(bool) {
+		t.Error("isEmpty(no args): expected true")
+	}
+}
+
+func TestDefaultEdgeCases(t *testing.T) {
+	f := exttypes.Default()
+	// 0 args -> nil
+	got, err := f([]any{}, nil)
+	if err != nil || got != nil {
+		t.Errorf("default(0 args): got %v, %v", got, err)
+	}
+	// 1 arg non-nil -> returns it
+	got, _ = f([]any{"val"}, nil)
+	if got != "val" {
+		t.Errorf("default(1 arg): got %v", got)
+	}
+}
+
+func TestIdentityNoArgs(t *testing.T) {
+	f := exttypes.Identity()
+	got, err := f([]any{}, nil)
+	if err != nil || got != nil {
+		t.Errorf("identity(no args): got %v, %v", got, err)
+	}
+}

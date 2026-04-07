@@ -97,3 +97,100 @@ func TestAll(t *testing.T) {
 		}
 	}
 }
+
+// --- Additional coverage tests ---
+
+func TestUUIDErrors(t *testing.T) {
+	f := extcrypto.UUID()
+	// Normal call should succeed
+	got, err := f([]any{}, nil)
+	if err != nil {
+		t.Fatalf("uuid: unexpected error: %v", err)
+	}
+	if _, ok := got.(string); !ok {
+		t.Errorf("uuid: expected string, got %T", got)
+	}
+}
+
+func TestHashErrors(t *testing.T) {
+	f := extcrypto.Hash()
+
+	// too few args
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	// non-string algorithm
+	_, err = f([]any{42, "hello"}, nil)
+	if err == nil {
+		t.Error("expected error for non-string algorithm")
+	}
+	// non-string value
+	_, err = f([]any{"sha256", 42}, nil)
+	if err == nil {
+		t.Error("expected error for non-string value")
+	}
+	// unknown algorithm
+	_, err = f([]any{"xxhash", "hello"}, nil)
+	if err == nil {
+		t.Error("expected error for unknown algorithm")
+	}
+}
+
+func TestHashAllAlgorithms(t *testing.T) {
+	f := extcrypto.Hash()
+	algos := []string{"md5", "sha1", "sha256", "sha384", "sha512"}
+	for _, algo := range algos {
+		got, err := f([]any{algo, "test"}, nil)
+		if err != nil {
+			t.Errorf("hash %s: unexpected error: %v", algo, err)
+		}
+		if got.(string) == "" {
+			t.Errorf("hash %s: empty result", algo)
+		}
+	}
+}
+
+func TestHMACErrors(t *testing.T) {
+	f := extcrypto.HMAC()
+
+	// too few args
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	// non-string algorithm
+	_, err = f([]any{42, "key", "val"}, nil)
+	if err == nil {
+		t.Error("expected error for non-string algorithm")
+	}
+	// non-string key
+	_, err = f([]any{"sha256", 42, "val"}, nil)
+	if err == nil {
+		t.Error("expected error for non-string key")
+	}
+	// non-string value
+	_, err = f([]any{"sha256", "key", 42}, nil)
+	if err == nil {
+		t.Error("expected error for non-string value")
+	}
+	// unknown algorithm
+	_, err = f([]any{"xxhash", "key", "val"}, nil)
+	if err == nil {
+		t.Error("expected error for unknown algorithm")
+	}
+}
+
+func TestHMACAllAlgorithms(t *testing.T) {
+	f := extcrypto.HMAC()
+	algos := []string{"md5", "sha1", "sha256", "sha384", "sha512"}
+	for _, algo := range algos {
+		got, err := f([]any{algo, "secret", "message"}, nil)
+		if err != nil {
+			t.Errorf("hmac %s: unexpected error: %v", algo, err)
+		}
+		if got.(string) == "" {
+			t.Errorf("hmac %s: empty result", algo)
+		}
+	}
+}

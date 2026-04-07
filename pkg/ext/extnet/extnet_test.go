@@ -195,3 +195,155 @@ func TestAll(t *testing.T) {
 		}
 	}
 }
+
+// --- additional coverage tests ---
+
+func TestIPVersionNoArgs(t *testing.T) {
+	fn := extnet.IPVersion()
+	got, err := fn([]any{}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != float64(-1) {
+		t.Errorf("got %v, want -1", got)
+	}
+}
+
+func TestIPVersionNonString(t *testing.T) {
+	fn := extnet.IPVersion()
+	got, _ := fn([]any{42}, nil)
+	if got != float64(-1) {
+		t.Errorf("got %v, want -1", got)
+	}
+}
+
+func TestIsPrivateIPNoArgs(t *testing.T) {
+	fn := extnet.IsPrivateIP()
+	got, err := fn([]any{}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != false {
+		t.Errorf("got %v, want false", got)
+	}
+}
+
+func TestIsPrivateIPNonString(t *testing.T) {
+	fn := extnet.IsPrivateIP()
+	got, _ := fn([]any{42}, nil)
+	if got != false {
+		t.Errorf("got %v, want false", got)
+	}
+}
+
+func TestIPToIntNoArgs(t *testing.T) {
+	fn := extnet.IPToInt()
+	_, err := fn([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+}
+
+func TestIPToIntNonString(t *testing.T) {
+	fn := extnet.IPToInt()
+	_, err := fn([]any{42}, nil)
+	if err == nil {
+		t.Error("expected error for non-string arg")
+	}
+}
+
+func TestIPToIntInvalidIP(t *testing.T) {
+	fn := extnet.IPToInt()
+	_, err := fn([]any{"not-an-ip"}, nil)
+	if err == nil {
+		t.Error("expected error for invalid IP")
+	}
+}
+
+func TestIntToIPNoArgs(t *testing.T) {
+	fn := extnet.IntToIP()
+	_, err := fn([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+}
+
+func TestIntToIPNonNumeric(t *testing.T) {
+	fn := extnet.IntToIP()
+	_, err := fn([]any{"not-a-number"}, nil)
+	if err == nil {
+		t.Error("expected error for non-numeric arg")
+	}
+}
+
+func TestIntToIPOutOfRange(t *testing.T) {
+	fn := extnet.IntToIP()
+	_, err := fn([]any{float64(5000000000)}, nil)
+	if err == nil {
+		t.Error("expected error for value exceeding uint32 max")
+	}
+}
+
+func TestIPInCIDRNoArgs(t *testing.T) {
+	fn := extnet.IPInCIDR()
+	_, err := fn([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+}
+
+func TestIPInCIDRNonStringIP(t *testing.T) {
+	fn := extnet.IPInCIDR()
+	_, err := fn([]any{42, "192.168.1.0/24"}, nil)
+	if err == nil {
+		t.Error("expected error for non-string ip")
+	}
+}
+
+func TestIPInCIDRNonStringCIDR(t *testing.T) {
+	fn := extnet.IPInCIDR()
+	_, err := fn([]any{"192.168.1.1", 42}, nil)
+	if err == nil {
+		t.Error("expected error for non-string cidr")
+	}
+}
+
+func TestIPInCIDRInvalidIP(t *testing.T) {
+	fn := extnet.IPInCIDR()
+	_, err := fn([]any{"not-an-ip", "192.168.1.0/24"}, nil)
+	if err == nil {
+		t.Error("expected error for invalid IP")
+	}
+}
+
+func TestIPInCIDRInvalidCIDR(t *testing.T) {
+	fn := extnet.IPInCIDR()
+	_, err := fn([]any{"192.168.1.1", "not-a-cidr"}, nil)
+	if err == nil {
+		t.Error("expected error for invalid CIDR")
+	}
+}
+
+func TestExpandCIDRNoArgs(t *testing.T) {
+	fn := extnet.ExpandCIDR()
+	_, err := fn([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+}
+
+func TestExpandCIDRNonString(t *testing.T) {
+	fn := extnet.ExpandCIDR()
+	_, err := fn([]any{42}, nil)
+	if err == nil {
+		t.Error("expected error for non-string arg")
+	}
+}
+
+func TestExpandCIDRInvalid(t *testing.T) {
+	fn := extnet.ExpandCIDR()
+	_, err := fn([]any{"not-a-cidr"}, nil)
+	if err == nil {
+		t.Error("expected error for invalid CIDR")
+	}
+}

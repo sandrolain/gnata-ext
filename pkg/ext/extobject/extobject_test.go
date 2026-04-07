@@ -150,3 +150,148 @@ func TestAll(t *testing.T) {
 		}
 	}
 }
+
+func TestValuesErrors(t *testing.T) {
+	f := extobject.Values()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("values: expected error for 0 args")
+	}
+	if _, err := invoke(f, "not-an-object"); err == nil {
+		t.Error("values: expected error for non-object")
+	}
+}
+
+func TestPairsErrors(t *testing.T) {
+	f := extobject.Pairs()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("pairs: expected error for 0 args")
+	}
+	if _, err := invoke(f, "not-an-object"); err == nil {
+		t.Error("pairs: expected error for non-object")
+	}
+}
+
+func TestFromPairsErrors(t *testing.T) {
+	f := extobject.FromPairs()
+	// 0 args
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("fromPairs: expected error for 0 args")
+	}
+	// non-array
+	if _, err := invoke(f, "not-array"); err == nil {
+		t.Error("fromPairs: expected error for non-array")
+	}
+	// pair with < 2 elements
+	if _, err := invoke(f, []any{[]any{"onlyone"}}); err == nil {
+		t.Error("fromPairs: expected error for pair with 1 element")
+	}
+	// pair with non-string key
+	if _, err := invoke(f, []any{[]any{42, "val"}}); err == nil {
+		t.Error("fromPairs: expected error for non-string key in pair")
+	}
+	// map-style pair missing key field
+	if _, err := invoke(f, []any{map[string]any{"notkey": "x", "value": "v"}}); err == nil {
+		t.Error("fromPairs: expected error for map without 'key' field")
+	}
+	// unexpected type in pairs array
+	if _, err := invoke(f, []any{42}); err == nil {
+		t.Error("fromPairs: expected error for unexpected element type")
+	}
+}
+
+func TestFromPairsMapStyle(t *testing.T) {
+	f := extobject.FromPairs()
+	got, err := invoke(f, []any{map[string]any{"key": "mykey", "value": "myval"}})
+	if err != nil {
+		t.Fatalf("fromPairs map-style: %v", err)
+	}
+	obj := got.(map[string]any)
+	if obj["mykey"] != "myval" {
+		t.Errorf("fromPairs map-style: got %v", obj)
+	}
+}
+
+func TestPickErrors(t *testing.T) {
+	f := extobject.Pick()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("pick: expected error for 0 args")
+	}
+	if _, err := invoke(f, "not-obj", []any{"a"}); err == nil {
+		t.Error("pick: expected error for non-object first arg")
+	}
+	if _, err := invoke(f, sampleObj, "not-array"); err == nil {
+		t.Error("pick: expected error for non-array keys")
+	}
+	if _, err := invoke(f, sampleObj, []any{42}); err == nil {
+		t.Error("pick: expected error for non-string key")
+	}
+}
+
+func TestOmitErrors(t *testing.T) {
+	f := extobject.Omit()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("omit: expected error for 0 args")
+	}
+	if _, err := invoke(f, "not-obj", []any{"a"}); err == nil {
+		t.Error("omit: expected error for non-object first arg")
+	}
+	if _, err := invoke(f, sampleObj, "not-array"); err == nil {
+		t.Error("omit: expected error for non-array keys")
+	}
+	if _, err := invoke(f, sampleObj, []any{42}); err == nil {
+		t.Error("omit: expected error for non-string key")
+	}
+}
+
+func TestDeepMergeErrors(t *testing.T) {
+	f := extobject.DeepMerge()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("deepMerge: expected error for 0 args")
+	}
+	if _, err := invoke(f, "not-obj", map[string]any{}); err == nil {
+		t.Error("deepMerge: expected error for non-object target")
+	}
+	if _, err := invoke(f, map[string]any{}, "not-obj"); err == nil {
+		t.Error("deepMerge: expected error for non-object source")
+	}
+}
+
+func TestInvertErrors(t *testing.T) {
+	f := extobject.Invert()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("invert: expected error for 0 args")
+	}
+	if _, err := invoke(f, "not-obj"); err == nil {
+		t.Error("invert: expected error for non-object")
+	}
+	// non-string value
+	if _, err := invoke(f, map[string]any{"k": 42}); err == nil {
+		t.Error("invert: expected error for non-string value")
+	}
+}
+
+func TestSizeErrors(t *testing.T) {
+	f := extobject.Size()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("size: expected error for 0 args")
+	}
+	if _, err := invoke(f, "not-obj"); err == nil {
+		t.Error("size: expected error for non-object")
+	}
+}
+
+func TestRenameErrors(t *testing.T) {
+	f := extobject.Rename()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("rename: expected error for 0 args")
+	}
+	if _, err := invoke(f, "not-obj", "old", "new"); err == nil {
+		t.Error("rename: expected error for non-object first arg")
+	}
+	if _, err := invoke(f, sampleObj, 42, "new"); err == nil {
+		t.Error("rename: expected error for non-string oldKey")
+	}
+	if _, err := invoke(f, sampleObj, "a", 42); err == nil {
+		t.Error("rename: expected error for non-string newKey")
+	}
+}

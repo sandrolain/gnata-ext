@@ -110,3 +110,45 @@ func TestAll(t *testing.T) {
 		}
 	}
 }
+
+func TestParseCSVErrors(t *testing.T) {
+	f := extformat.ParseCSV()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("csv: expected error for 0 args")
+	}
+	if _, err := f([]any{42}, nil); err == nil {
+		t.Error("csv: expected error for non-string")
+	}
+}
+
+func TestToCSVErrors(t *testing.T) {
+	f := extformat.ToCSV()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("toCSV: expected error for 0 args")
+	}
+	if _, err := f([]any{"not-array"}, nil); err == nil {
+		t.Error("toCSV: expected error for non-array")
+	}
+	// first element not an object
+	if _, err := f([]any{[]any{"not-obj"}}, nil); err == nil {
+		t.Error("toCSV: expected error for non-object first element")
+	}
+	// subsequent row not an object
+	row1 := map[string]any{"a": "1"}
+	if _, err := f([]any{[]any{row1, "bad"}}, nil); err == nil {
+		t.Error("toCSV: expected error for non-object subsequent row")
+	}
+}
+
+func TestTemplateErrors(t *testing.T) {
+	f := extformat.Template()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("template: expected error for 0 args")
+	}
+	if _, err := f([]any{42, map[string]any{}}, nil); err == nil {
+		t.Error("template: expected error for non-string template")
+	}
+	if _, err := f([]any{"{{x}}", "not-object"}, nil); err == nil {
+		t.Error("template: expected error for non-object vars")
+	}
+}

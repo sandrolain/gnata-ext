@@ -7,7 +7,8 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnumeric"
 )
 
-func call(fn func() interface{ /* placeholder */ }, args ...any) (any, error) {
+func call(fn func() interface { /* placeholder */
+}, args ...any) (any, error) {
 	return nil, nil
 }
 
@@ -149,5 +150,220 @@ func TestMode(t *testing.T) {
 	got, err := invoke(f, []any{1.0, 2.0, 2.0, 3.0})
 	if err != nil || got.(float64) != 2.0 {
 		t.Errorf("mode([1,2,2,3]): got %v, %v", got, err)
+	}
+}
+
+// --- Additional coverage tests ---
+
+func TestAtan2(t *testing.T) {
+	f := extnumeric.Atan2()
+	got, err := invoke(f, 1.0, 1.0)
+	if err != nil {
+		t.Fatalf("atan2: unexpected error: %v", err)
+	}
+	if got.(float64) <= 0 {
+		t.Errorf("atan2(1,1): expected positive, got %v", got)
+	}
+}
+
+func TestAtan2Errors(t *testing.T) {
+	f := extnumeric.Atan2()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad", 1.0)
+	if err == nil {
+		t.Error("expected error for non-numeric y")
+	}
+	_, err = invoke(f, 1.0, "bad")
+	if err == nil {
+		t.Error("expected error for non-numeric x")
+	}
+}
+
+func TestLogErrors(t *testing.T) {
+	f := extnumeric.Log()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad")
+	if err == nil {
+		t.Error("expected error for non-numeric")
+	}
+	_, err = invoke(f, -1.0)
+	if err == nil {
+		t.Error("expected error for non-positive")
+	}
+	// two-arg form — bad base
+	_, err = invoke(f, 4.0, "bad")
+	if err == nil {
+		t.Error("expected error for non-numeric base")
+	}
+	// base <= 0
+	_, err = invoke(f, 4.0, -1.0)
+	if err == nil {
+		t.Error("expected error for non-positive base")
+	}
+	// base == 1
+	_, err = invoke(f, 4.0, 1.0)
+	if err == nil {
+		t.Error("expected error for base=1")
+	}
+}
+
+func TestLogBase(t *testing.T) {
+	f := extnumeric.Log()
+	// log_2(8) = 3
+	got, err := invoke(f, 8.0, 2.0)
+	if err != nil {
+		t.Fatalf("log base 2: %v", err)
+	}
+	if got.(float64) < 2.9 || got.(float64) > 3.1 {
+		t.Errorf("log_2(8): expected ~3, got %v", got)
+	}
+}
+
+func TestSignErrors(t *testing.T) {
+	f := extnumeric.Sign()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad")
+	if err == nil {
+		t.Error("expected error for non-numeric")
+	}
+}
+
+func TestTruncErrors(t *testing.T) {
+	f := extnumeric.Trunc()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad")
+	if err == nil {
+		t.Error("expected error for non-numeric")
+	}
+}
+
+func TestClampErrors(t *testing.T) {
+	f := extnumeric.Clamp()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad", 0.0, 10.0)
+	if err == nil {
+		t.Error("expected error for non-numeric n")
+	}
+	_, err = invoke(f, 5.0, "bad", 10.0)
+	if err == nil {
+		t.Error("expected error for non-numeric min")
+	}
+	_, err = invoke(f, 5.0, 0.0, "bad")
+	if err == nil {
+		t.Error("expected error for non-numeric max")
+	}
+}
+
+func TestMedianErrors(t *testing.T) {
+	f := extnumeric.Median()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad")
+	if err == nil {
+		t.Error("expected error for non-array")
+	}
+}
+
+func TestVarianceErrors(t *testing.T) {
+	f := extnumeric.Variance()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad")
+	if err == nil {
+		t.Error("expected error for non-array")
+	}
+}
+
+func TestStddevErrors(t *testing.T) {
+	f := extnumeric.Stddev()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad")
+	if err == nil {
+		t.Error("expected error for non-array")
+	}
+}
+
+func TestPercentileErrors(t *testing.T) {
+	f := extnumeric.Percentile()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad", 50.0)
+	if err == nil {
+		t.Error("expected error for non-array")
+	}
+	_, err = invoke(f, []any{1.0, 2.0}, "bad")
+	if err == nil {
+		t.Error("expected error for non-numeric p")
+	}
+	_, err = invoke(f, []any{1.0, 2.0}, -1.0)
+	if err == nil {
+		t.Error("expected error for p < 0")
+	}
+	_, err = invoke(f, []any{1.0, 2.0}, 101.0)
+	if err == nil {
+		t.Error("expected error for p > 100")
+	}
+}
+
+func TestPercentileEdgeCases(t *testing.T) {
+	f := extnumeric.Percentile()
+	// p=0 → min, p=100 → max
+	got, err := invoke(f, []any{3.0, 1.0, 2.0}, 0.0)
+	if err != nil || got.(float64) != 1.0 {
+		t.Errorf("p=0: got %v, %v", got, err)
+	}
+	got, err = invoke(f, []any{3.0, 1.0, 2.0}, 100.0)
+	if err != nil || got.(float64) != 3.0 {
+		t.Errorf("p=100: got %v, %v", got, err)
+	}
+}
+
+func TestModeErrors(t *testing.T) {
+	f := extnumeric.Mode()
+	_, err := f([]any{}, nil)
+	if err == nil {
+		t.Error("expected error for 0 args")
+	}
+	_, err = invoke(f, "bad")
+	if err == nil {
+		t.Error("expected error for non-array")
+	}
+}
+
+func TestMathFunc1Errors(t *testing.T) {
+	// sin covers mathFunc1 -- test error paths via All() map
+	all := extnumeric.All()
+	sinFn := all["sin"]
+	_, err := sinFn([]any{}, nil)
+	if err == nil {
+		t.Error("sin: expected error for 0 args")
+	}
+	_, err = sinFn([]any{"bad"}, nil)
+	if err == nil {
+		t.Error("sin: expected error for non-numeric")
 	}
 }
