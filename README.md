@@ -278,6 +278,156 @@ Individual functions can also be retrieved directly via their exported Go constr
 
 ---
 
+## EnvBuilder — selective environment construction
+
+`EnvBuilder` provides a fluent API for assembling function sets without manual map operations:
+
+```go
+import (
+    "github.com/recolabs/gnata"
+    "github.com/sandrolain/gnata-ext/pkg/ext"
+)
+
+funcs := ext.NewEnvBuilder().
+    WithStringFuncs().
+    WithNumericFuncs().
+    WithArrayFuncs().
+    Without("range", "mode"). // exclude specific functions
+    Build()
+
+env := gnata.NewCustomEnv(funcs)
+```
+
+`WithAllFuncs()` selects every function in one call; individual `With<Package>Funcs()` methods exist for each of the 13 sub-packages. `Without(names...)` removes names from the accumulated set. `Build()` (or `Funcs()`) returns a `map[string]gnata.CustomFunc` copy.
+
+---
+
+## Presets — pre-built function sets
+
+The `presets` package bundles commonly needed sub-packages into named environments:
+
+```go
+import (
+    "github.com/recolabs/gnata"
+    "github.com/sandrolain/gnata-ext/pkg/ext/presets"
+)
+
+env := gnata.NewCustomEnv(presets.DataEnv())
+```
+
+| Preset | Included packages |
+|---|---|
+| `DataEnv()` | `extarray`, `extobject`, `exttypes`, `extnumeric`, `extpath` |
+| `TextEnv()` | `extstring`, `extformat`, `exttypes` |
+| `SecureEnv()` | All packages, `$uuid` removed |
+| `AnalyticsEnv()` | `extdatetime`, `extarray`, `extnumeric` |
+
+---
+
+## FuncCatalog — function discovery
+
+`Catalog()` returns metadata for every registered function; useful for documentation, tooling, or runtime introspection:
+
+```go
+import "github.com/sandrolain/gnata-ext/pkg/ext"
+
+// List all functions
+for _, f := range ext.Catalog() {
+    fmt.Printf("$%s %s — %s\n", f.Name, f.Signature, f.Description)
+}
+
+// Group by package
+byPkg := ext.CatalogByPackage()
+for _, meta := range byPkg["extarray"] {
+    fmt.Println(meta.Name, meta.Signature)
+}
+```
+
+Each `FuncMeta` carries `Name`, `Package`, `Signature`, and `Description` fields.
+
+---
+
+## Middleware — cross-cutting concerns
+
+The `middleware` package wraps any `map[string]gnata.CustomFunc` with observable, cached, or rate-limited behaviour:
+
+```go
+import (
+    "log/slog"
+    "github.com/recolabs/gnata"
+    "github.com/sandrolain/gnata-ext/pkg/ext"
+    "github.com/sandrolain/gnata-ext/pkg/ext/middleware"
+)
+
+funcs := ext.AllFuncs()
+
+// Structured logging for every call
+funcs = middleware.WithLogging(funcs, slog.Default())
+
+// In-process memoization (exclude non-deterministic functions)
+funcs = middleware.WithMemoize(funcs, "uuid", "millis", "now")
+
+// Rate-limit to 100 calls/second across all functions
+funcs = middleware.WithRateLimit(funcs, 100)
+
+env := gnata.NewCustomEnv(funcs)
+```
+
+Wrappers can be combined in any order and applied to a subset of functions by first selecting them with `EnvBuilder`.
+
+---
+
+## Testing helper
+
+The `exttesting` package simplifies writing table-driven tests against JSONata expressions:
+
+```go
+import (
+    "testing"
+
+    "github.com/sandrolain/gnata-ext/pkg/ext"
+    exttesting "github.com/sandrolain/gnata-ext/pkg/ext/testing"
+)
+
+func TestMyExpressions(t *testing.T) {
+    env := exttesting.New(ext.AllFuncs(),
+        exttesting.WithFrozenTime(1705319400000),        // deterministic $millis()
+        exttesting.WithDeterministicUUID("fixed-uuid"),  // deterministic $uuid()
+    )
+
+    env.AssertEqual(t, `$uuid()`, nil, "fixed-uuid")
+    env.AssertEqual(t, `$first([1,2,3])`, nil, float64(1))
+    env.AssertError(t, `$hash("bad", "x")`, nil)
+}
+```
+
+`Eval(t, expr, data)` evaluates and returns the result; `AssertEqual` and `AssertError` call `t.Fatal` on mismatch. `WithExtraFuncs` injects additional custom functions for a single `Env`.
+
+---
+
+## CLI tool
+
+A command-line tool ships under `cmd/gnata-ext-cli` for quick expression evaluation and function discovery:
+
+```sh
+# Install
+go install github.com/sandrolain/gnata-ext/cmd/gnata-ext-cli@latest
+
+# Evaluate an expression (all extension functions are available)
+gnata-ext-cli eval '$first([1,2,3])'
+gnata-ext-cli eval '$hash("sha256","hello")' --data '{"msg":"world"}'
+gnata-ext-cli eval '$dateAdd($millis(),1,"day")' --data-file payload.json
+
+# List all functions (or filter by package)
+gnata-ext-cli list
+gnata-ext-cli list --package extarray
+
+# Show signature and description for a function
+gnata-ext-cli describe haversine
+```
+
+---
+
 ## Examples
 
 Runnable examples for each domain package are in the [`examples/`](examples/) directory:
