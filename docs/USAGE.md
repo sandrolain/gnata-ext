@@ -172,19 +172,6 @@ $toCSV(
 
 ## Conflict resolution and name overrides
 
-`ext.AllFuncs()` merges all sub-packages. The merge order is:
-
-1. `extarray`
-2. `extcrypto`
-3. `extdatetime`
-4. `extformat`
-5. `extnumeric`
-6. `extobject`
-7. `extstring`
-8. `exttypes`
-
-Both `extformat` and `extstring` register a `template` function with identical behaviour. Because `extstring` is merged after `extformat`, the `extstring` implementation wins when you use `ext.AllFuncs()`. If you need a specific implementation, build the map manually:
-
 `ext.AllFuncs()` merges all sub-packages in this order:
 
 1. `extarray`
@@ -200,6 +187,8 @@ Both `extformat` and `extstring` register a `template` function with identical b
 11. `extstring`
 12. `exttypes`
 13. `extvalidate`
+
+Both `extformat` and `extstring` register a `template` function with identical behaviour. Because `extstring` is merged after `extformat`, the `extstring` implementation wins when you use `ext.AllFuncs()`.
 
 If you need a specific function implementation from a particular package, build the map manually:
 
