@@ -61,15 +61,15 @@ Builds all packages in the module.
 ### CLI tool
 
 ```sh
-go build -o gnata-ext-cli ./cmd/gnata-ext-cli
-./gnata-ext-cli eval '$uuid()'
+go build -o jn ./cmd/jn
+./jn -n '$uuid()'
 ```
 
 Or install globally:
 
 ```sh
-go install ./cmd/gnata-ext-cli
-gnata-ext-cli eval '$first([1,2,3])'
+go install ./cmd/jn
+jn -n '$first([1,2,3])'
 ```
 
 ---
@@ -87,7 +87,7 @@ pkg/ext/
   presets/            Pre-built environments
   testing/            Test helper (exttesting)
 
-cmd/gnata-ext-cli/    CLI tool source code
+cmd/jn/               CLI tool source code (jn)
 
 docs/
   FUNCTIONS.md        Function reference

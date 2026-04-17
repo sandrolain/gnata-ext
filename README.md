@@ -6,15 +6,31 @@ Extended JSONata functions for [gnata](https://github.com/RecoLabs/gnata) — th
 
 `gnata-ext` ports and adapts the extension functions from the [gosonata](https://github.com/blues/gosonata) `pkg/ext` library to gnata's `CustomFunc` API, providing over **110 additional functions** grouped into thirteen domain packages.
 
+Also includes **`jn`** — a command-line JSONata processor inspired by `jq`, powered by all gnata-ext functions.
+
+> **No naming conflicts:** all gnata-ext custom functions (`$first`, `$camelCase`, `$uuid`, `$haversine`, …) have distinct names from the built-in JSONata functions (`$string`, `$length`, `$sum`, `$map`, `$merge`, etc.).
+
 ---
 
 ## Installation
+
+**Go library:**
 
 ```sh
 go get github.com/sandrolain/gnata-ext
 ```
 
 Requires Go 1.21+ and `github.com/recolabs/gnata v0.2.1`.
+
+**CLI (`jn`):**
+
+```sh
+# Install from source
+go install github.com/sandrolain/gnata-ext/cmd/jn@latest
+
+# Or download a pre-built binary from GitHub Releases:
+# https://github.com/sandrolain/gnata-ext/releases
+```
 
 ---
 
@@ -47,7 +63,7 @@ Extended documentation and patterns are in `docs/guides/`:
 | [catalog.md](docs/guides/catalog.md) | Runtime function discovery and introspection |
 | [middleware.md](docs/guides/middleware.md) | Logging, memoization, rate limiting |
 | [testing.md](docs/guides/testing.md) | Table-driven tests with `exttesting` |
-| [cli.md](docs/guides/cli.md) | Command-line tool for evaluation and discovery |
+| [cli.md](docs/guides/cli.md) | `jn` CLI — JSONata processor inspired by jq |
 | [development.md](docs/guides/development.md) | Building, testing, contributing |
 
 ---
@@ -83,6 +99,47 @@ gnata does not expose a `Caller` interface for invoking lambda values from withi
 
 ---
 
+## `jn` — Command-Line Processor
+
+`jn` is a JSONata CLI tool inspired by `jq`. It reads JSON from stdin or files, evaluates a JSONata expression with all gnata-ext functions loaded, and writes results to stdout.
+
+```sh
+# Pretty-print input
+echo '{"name":"Alice","age":30}' | jn '$'
+
+# Field access
+echo '{"name":"Alice"}' | jn '$.name'
+
+# Use an extension function
+echo '"hello world"' | jn '$camelCase($)'
+
+# Null input (no data)
+jn -n '$uuid()'
+
+# Compact output
+echo '[3,1,2]' | jn -c '$sort($)'
+
+# Raw string output
+echo '{"msg":"hello"}' | jn -r '$.msg'
+
+# Slurp all JSON values into array
+cat records.json | jn -s '$count($)'
+
+# List all extension functions
+jn list
+jn list --package extarray
+
+# Describe a specific function
+jn describe haversine
+
+# Show version
+jn version
+```
+
+See [docs/guides/cli.md](docs/guides/cli.md) for full flag reference and examples.
+
+---
+
 ## Development
 
 Building, testing, and contributing — see [docs/guides/development.md](docs/guides/development.md) for:
@@ -99,6 +156,9 @@ go test ./...
 
 # Run with race detector
 go test -race ./...
+
+# Build CLI locally
+go build -o jn ./cmd/jn
 
 # Lint
 golangci-lint run

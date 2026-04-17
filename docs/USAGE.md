@@ -6,23 +6,25 @@ Practical patterns for integrating `gnata-ext` into Go projects.
 
 ## Contents
 
-- [Installing the module](#installing-the-module)
-- [Registering all functions](#registering-all-functions)
-- [Registering a single package](#registering-a-single-package)
-- [Merging selected packages](#merging-selected-packages)
-- [EnvBuilder — fluent construction](#envbuilder--fluent-construction)
-- [Presets — pre-built function sets](#presets--pre-built-function-sets)
-- [Using individual functions directly in Go](#using-individual-functions-directly-in-go)
-- [StreamEvaluator integration](#streamevaluator-integration)
-- [Writing expressions with extension functions](#writing-expressions-with-extension-functions)
-- [Conflict resolution and name overrides](#conflict-resolution-and-name-overrides)
-- [Passing the environment to EvalWithCustomFuncs](#passing-the-environment-to-evalwithcustomfuncs)
-- [Middleware — cross-cutting concerns](#middleware--cross-cutting-concerns)
-- [FuncCatalog — function discovery](#funccatalog--function-discovery)
-- [Testing helper](#testing-helper)
-- [CLI tool](#cli-tool)
-- [Examples](#examples)
-- [Integration tests](#integration-tests)
+- [Usage Guide](#usage-guide)
+  - [Contents](#contents)
+  - [Installing the module](#installing-the-module)
+  - [Registering all functions](#registering-all-functions)
+  - [Registering a single package](#registering-a-single-package)
+  - [EnvBuilder — fluent construction](#envbuilder--fluent-construction)
+  - [Presets — pre-built function sets](#presets--pre-built-function-sets)
+  - [Merging selected packages](#merging-selected-packages)
+  - [Using individual functions directly in Go](#using-individual-functions-directly-in-go)
+  - [StreamEvaluator integration](#streamevaluator-integration)
+  - [Writing expressions with extension functions](#writing-expressions-with-extension-functions)
+  - [Conflict resolution and name overrides](#conflict-resolution-and-name-overrides)
+  - [Passing the environment to EvalWithCustomFuncs](#passing-the-environment-to-evalwithcustomfuncs)
+  - [Middleware — cross-cutting concerns](#middleware--cross-cutting-concerns)
+  - [FuncCatalog — function discovery](#funccatalog--function-discovery)
+  - [Testing helper](#testing-helper)
+  - [CLI tool](#cli-tool)
+  - [Examples](#examples)
+  - [Integration tests](#integration-tests)
 
 ---
 
@@ -375,30 +377,30 @@ func TestExpressions(t *testing.T) {
 
 ## CLI tool
 
-A command-line tool is available under `cmd/gnata-ext-cli` for quick expression evaluation and function discovery:
+`jn` is a command-line JSONata processor (inspired by `jq`) available under `cmd/jn`:
 
 ```sh
 # Install
-go install github.com/sandrolain/gnata-ext/cmd/gnata-ext-cli@latest
+go install github.com/sandrolain/gnata-ext/cmd/jn@latest
 
 # Evaluate an expression — all extension functions are available
-gnata-ext-cli eval '$first([1,2,3])'
-gnata-ext-cli eval '$hash("sha256","hello")'
-gnata-ext-cli eval '$camelCase(name)' --data '{"name":"hello world"}'
-gnata-ext-cli eval '$dateAdd($millis(),7,"day")' --data-file payload.json
+echo '[1,2,3]' | jn '$first($)'
+jn -n '$hash("sha256","hello")'
+echo '{"name":"hello world"}' | jn '$camelCase($.name)'
+jn -n '$dateAdd($millis(),7,"day")'
 
 # List all registered functions
-gnata-ext-cli list
+jn list
 
 # Filter by package name
-gnata-ext-cli list --package extarray
+jn list --package extarray
 
 # Show signature and description for a specific function
-gnata-ext-cli describe haversine
-gnata-ext-cli describe chunk
+jn describe haversine
+jn describe chunk
 ```
 
-All extension functions are pre-loaded; no extra configuration is needed.
+See [docs/guides/cli.md](guides/cli.md) for the full flag reference and jq-compatible options (`-c`, `-r`, `-n`, `-s`, `-f`, `--arg`, `--argjson`, etc.).
 
 ---
 

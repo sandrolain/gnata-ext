@@ -1,109 +1,227 @@
-# CLI Tool
+# `jn` — CLI Tool
 
-Command-line interface for evaluating expressions and discovering functions.
+`jn` is a command-line JSONata processor inspired by `jq`. It evaluates
+JSONata expressions with all gnata-ext extension functions loaded and reads
+JSON from files or stdin.
 
 ---
 
 ## Installation
 
 ```sh
-go install github.com/sandrolain/gnata-ext/cmd/gnata-ext-cli@latest
+# From source (requires Go 1.21+)
+go install github.com/sandrolain/gnata-ext/cmd/jn@latest
+
+# Or download a pre-built binary from GitHub Releases:
+# https://github.com/sandrolain/gnata-ext/releases
 ```
 
 ---
 
-## Commands
+## Basic Usage
 
-### `eval` — Evaluate expressions
-
-Evaluate a JSONata expression with all extension functions available:
-
-```sh
-# Simple expression
-gnata-ext-cli eval '$first([1,2,3])'
-# Output: 1
-
-# With inline data
-gnata-ext-cli eval '$hash("sha256","hello")' --data '{"msg":"world"}'
-
-# With data from file
-gnata-ext-cli eval '$dateAdd($millis(),1,"day")' --data-file payload.json
 ```
+jn [flags] [expr] [file...]
+```
+
+- **`expr`** — a JSONata expression (default: `$`, returns input unchanged)
+- **`file...`** — one or more JSON files; stdin is used when omitted
 
 ---
 
-### `list` — List functions
-
-Show all registered functions (or filter by package):
+## Quick Examples
 
 ```sh
-# All functions
-gnata-ext-cli list
-# extarray: first, last, take, skip, ...
-# extcrypto: uuid, hash, hmac
-# ...
+# Identity — pretty-print stdin
+echo '{"name":"Alice","age":30}' | jn '$'
 
-# Filter by package
-gnata-ext-cli list --package extarray
-# $first(array) — First element
-# $last(array) — Last element
-# ...
-```
+# Field access
+echo '{"name":"Alice"}' | jn '$.name'
 
----
+# Extension function
+echo '"hello world"' | jn '$camelCase($)'
 
-### `describe` — Function details
+# No input needed
+jn -n '$uuid()'
+jn -n '$dateAdd($millis(), 7, "day")'
 
-Show signature and description for a specific function:
+# From a file
+jn '$.users.$count($)' data.json
 
-```sh
-gnata-ext-cli describe haversine
-# Output:
-# Package: extgeo
-# Signature: haversine(lat1, lon1, lat2, lon2)
-# Great-circle distance in km
+# Multiple files (processed sequentially)
+jn '$sum($.prices)' jan.json feb.json mar.json
 
-gnata-ext-cli describe chunk
-# Output:
-# Package: extarray
-# Signature: chunk(array, size)
-# Split into fixed-size chunks
+# Compact output
+echo '[3,1,2]' | jn -c '$sort($)'
+
+# Raw string output (no JSON quotes)
+echo '{"msg":"hello"}' | jn -r '$.msg'
+
+# Slurp all JSON values into one array, then evaluate
+cat records.ndjson | jn -s '$count($)'
+cat records.ndjson | jn -s '$filter($, function($v){ $v.active })'
+
+# Read expression from a file
+jn -f transform.jsonata data.json
+
+# Bind a string variable
+jn --arg 'prefix=hello' '$prefix & " " & $.name' data.json
+
+# Bind a JSON variable
+jn --argjson 'limit=10' '$take($.items, $limit)' data.json
+
+# Exit status: exit 5 if output is null/false
+jn -e '$.active' record.json && echo "active"
 ```
 
 ---
 
 ## Flags
 
-| Flag | Description | Example |
-|---|---|---|
-| `--data` | JSON data to pass to expression | `--data '{"x":1}'` |
-| `--data-file` | Path to JSON file | `--data-file input.json` |
-| `--package` | Filter by package name (for `list`) | `--package extstring` |
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--compact` | `-c` | Compact JSON output (no indentation) |
+| `--raw-output` | `-r` | Output raw strings without JSON quotes |
+| `--raw-input` | `-R` | Read each input line as a raw string |
+| `--null-input` | `-n` | Use null as input (evaluate without data) |
+| `--exit-status` | `-e` | Exit 5 if last output is null or false |
+| `--from-file <file>` | `-f` | Read JSONata expression from a file |
+| `--slurp` | `-s` | Slurp all JSON values into an array first |
+| `--join-output` | `-j` | No trailing newline after each output |
+| `--tab` | | Use tab indentation (overrides `--indent`) |
+| `--indent <n>` | | Indentation width in spaces (0–7, default 2) |
+| `--sort-keys` | `-S` | Sort object keys (no-op: Go already sorts) |
+| `--data <json>` | | Inline JSON input data string |
+| `--data-file <file>` | | Path to JSON input file |
+| `--arg name=value` | | Bind `$name` to a string value |
+| `--argjson name=json` | | Bind `$name` to a parsed JSON value |
 
 ---
 
-## Examples
+## Subcommands
+
+### `jn list` — List extension functions
+
+```sh
+# All functions
+jn list
+
+# Filter by package
+jn list --package extarray
+jn list -p extnumeric
+```
+
+Output columns: `FUNCTION`, `PACKAGE`, `DESCRIPTION`.
+
+---
+
+### `jn describe` — Show function details
+
+```sh
+jn describe haversine
+jn describe $chunk     # leading $ is optional
+```
+
+Output:
+
+```
+Function:    $haversine
+Package:     extgeo
+Signature:   $haversine(lat1, lon1, lat2, lon2: number) → number
+Description: Great-circle distance in kilometres.
+```
+
+---
+
+### `jn version` — Show version
+
+```sh
+jn version
+# jn version v1.2.3
+```
+
+---
+
+## Advanced Examples
 
 ```sh
 # Date arithmetic
-gnata-ext-cli eval '$dateAdd($millis(), 7, "day")'
+jn -n '$fromMillis($dateAdd($millis(), 7, "day"))'
 
 # String manipulation
-gnata-ext-cli eval '$camelCase("hello world")'
+echo '["hello world","foo bar"]' | jn '$map($, $camelCase)'
+
+# Crypto
+jn -n '$hash("sha256", "hello")'
+jn -n '$uuid()'
 
 # Array operations
-gnata-ext-cli eval '$chunk($range(1, 11), 3)'
+echo '[1,2,3,4,5,6,7,8,9,10]' | jn '$chunk($, 3)'
+echo '[1,2,3,4,5]' | jn '$window($, 3)'
 
-# Complex expression with data
-gnata-ext-cli eval '$uuid() & ":" & $hash("sha256", email)' \
-    --data '{"email":"user@example.com"}'
+# Geo distance
+jn -n '$haversine(51.5, -0.1, 48.8, 2.3)'
 
-# Read from file
-gnata-ext-cli eval '$toCSV(records)' --data-file records.json
+# Validate input
+echo '"user@example.com"' | jn '$isEmail($)'
 
-# List all validation functions
-gnata-ext-cli list --package extvalidate
+# CSV parsing
+echo '"a,b,c\n1,2,3\n4,5,6"' | jn '$csv($)'
 
-# Check if a string is an email
-gnata-ext-cli eval '$isEmail("test@example.com")'
+# Complex transform from file
+jn '
+  $map($.orders, function($o) {
+    {
+      "id":    $o.id,
+      "total": $sum($o.items.price),
+      "date":  $fromMillis($o.timestamp)
+    }
+  })
+' orders.json
 ```
+
+---
+
+## Using `--arg` and `--argjson`
+
+Variable bindings are injected as JSONata block assignments wrapping the expression:
+
+```sh
+# String binding
+jn --arg 'sep=, ' '$join($.tags, $sep)' item.json
+# Equivalent expression: ($sep := ", "; $join($.tags, $sep))
+
+# JSON binding
+jn --argjson 'n=5' '$take($sort($.scores), $n)' data.json
+```
+
+---
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | Usage or flag error |
+| `2` | Compile error (invalid expression) |
+| `5` | `--exit-status` and last output was null/false |
+
+---
+
+## Comparison with jq
+
+| Feature | `jq` | `jn` |
+|---------|------|------|
+| Query language | jq filter syntax | JSONata 2.x |
+| Extension functions | built-in + modules | 110+ gnata-ext functions |
+| Null input (`-n`) | ✓ | ✓ |
+| Raw output (`-r`) | ✓ | ✓ |
+| Raw input (`-R`) | ✓ | ✓ |
+| Slurp (`-s`) | ✓ | ✓ |
+| Compact (`-c`) | ✓ | ✓ |
+| Exit status (`-e`) | ✓ | ✓ |
+| From file (`-f`) | ✓ | ✓ |
+| `--arg` / `--argjson` | ✓ | ✓ (name=value format) |
+| Streaming large files | ✓ | ✓ (json.Decoder) |
+| Color output | ✓ | — |
+| `@base64`, `@csv` formats | ✓ | — (use extension functions) |
