@@ -1,6 +1,6 @@
 // jn — JSONata processor with gnata-ext extension functions.
 //
-// Usage (inspired by jq):
+// Usage (inspired by jn):
 //
 //	jn [flags] [expr] [file...]
 //	jn list [--package <pkg>]
@@ -10,14 +10,16 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"sort"
 	"strings"
 
+	"github.com/mattn/go-colorable"
+	json "github.com/neilotoole/jsoncolor"
 	"github.com/recolabs/gnata"
 	"github.com/sandrolain/gnata-ext/pkg/ext"
 	"github.com/spf13/cobra"
@@ -39,6 +41,7 @@ type evalOpts struct {
 	dataFile    string
 	compact     bool
 	rawOutput   bool
+	rawOutput0  bool // output raw strings with NUL terminator instead of newline
 	rawInput    bool
 	nullInput   bool
 	exitStatus  bool
@@ -50,6 +53,9 @@ type evalOpts struct {
 	slurp       bool
 	argVars     []string
 	argjsonVars []string
+	colorOutput bool // -C: force color even when not a terminal
+	monoOutput  bool // -M: disable color output
+	unbuffered  bool // flush output after each JSON object
 }
 
 func buildRoot() *cobra.Command {
@@ -58,7 +64,7 @@ func buildRoot() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "jn [flags] [expr] [file...]",
 		Short: "JSONata processor with extended functions",
-		Long: `jn — JSONata expression processor (inspired by jq)
+		Long: `jn — JSONata expression processor (inspired by jn)
 
 Reads JSON from files or stdin, evaluates a JSONata expression with
 gnata-ext extension functions, and writes results to stdout.
@@ -85,6 +91,9 @@ EXAMPLES
   # raw string output
   echo '{"msg":"hello"}' | jn -r '$.msg'
 
+  # colored output (auto-detected when stdout is a terminal)
+  echo '{"x":1}' | jn -C '$'
+
   # slurp all JSON values into array
   cat lines.json | jn -s '$count($)'
 
@@ -105,6 +114,7 @@ EXAMPLES
 	f.StringVar(&opts.dataFile, "data-file", "", "path to JSON input file")
 	f.BoolVarP(&opts.compact, "compact", "c", false, "compact output (no indentation)")
 	f.BoolVarP(&opts.rawOutput, "raw-output", "r", false, "output raw strings, not JSON-encoded")
+	f.BoolVar(&opts.rawOutput0, "raw-output0", false, "like -r but use NUL as separator instead of newline")
 	f.BoolVarP(&opts.rawInput, "raw-input", "R", false, "read each input line as a raw string")
 	f.BoolVarP(&opts.nullInput, "null-input", "n", false, "use null as input (no data required)")
 	f.BoolVarP(&opts.exitStatus, "exit-status", "e", false, "exit 5 if last output is null or false")
@@ -116,6 +126,9 @@ EXAMPLES
 	f.BoolVarP(&opts.slurp, "slurp", "s", false, "slurp all inputs into an array before eval")
 	f.StringArrayVar(&opts.argVars, "arg", nil, "bind string variable: --arg name=value")
 	f.StringArrayVar(&opts.argjsonVars, "argjson", nil, "bind JSON variable: --argjson name=json")
+	f.BoolVarP(&opts.colorOutput, "color-output", "C", false, "force colorized output even when not writing to a terminal")
+	f.BoolVarP(&opts.monoOutput, "monochrome-output", "M", false, "disable colorized output")
+	f.BoolVar(&opts.unbuffered, "unbuffered", false, "flush output after each JSON object is printed")
 
 	root.AddCommand(buildListCmd())
 	root.AddCommand(buildDescribeCmd())
@@ -156,7 +169,7 @@ func runEval(opts evalOpts, posArgs []string) error {
 	}
 	env := gnata.NewCustomEnv(ext.AllFuncs())
 	ctx := context.Background()
-	p := &printer{opts: opts}
+	p := newPrinter(opts)
 
 	// Null-input mode: evaluate once with nil
 	if opts.nullInput {
@@ -165,6 +178,9 @@ func runEval(opts evalOpts, posArgs []string) error {
 			return fmt.Errorf("eval: %w", err)
 		}
 		if err := p.print(result); err != nil {
+			return err
+		}
+		if err := p.flush(); err != nil {
 			return err
 		}
 		return p.checkExit()
@@ -204,6 +220,9 @@ func runEval(opts evalOpts, posArgs []string) error {
 		}
 	}
 
+	if err := p.flush(); err != nil {
+		return err
+	}
 	return p.checkExit()
 }
 
@@ -288,45 +307,164 @@ func stdinSource() dataSource {
 // ─── output formatting ────────────────────────────────────────────────────
 
 type printer struct {
-	opts     evalOpts
-	lastVal  any
-	hasValue bool
+	opts      evalOpts
+	lastVal   any
+	hasValue  bool
+	w         io.Writer     // effective output writer (may be buffered)
+	bw        *bufio.Writer // non-nil when using buffered output
+	colorMode bool          // whether ANSI color is active
+	colors    *json.Colors  // color config (nil = no color)
+	indent    string        // indentation string (empty when compact)
+}
+
+// newPrinter constructs a printer configured from opts.
+// Color is auto-detected from the terminal unless overridden by -C/-M or NO_COLOR.
+func newPrinter(opts evalOpts) *printer {
+	p := &printer{opts: opts}
+
+	// Resolve indent string
+	if !opts.compact {
+		if opts.tabIndent {
+			p.indent = "\t"
+		} else {
+			p.indent = strings.Repeat(" ", clampIndent(opts.indentN))
+		}
+	}
+
+	// Resolve color mode:
+	//   NO_COLOR env (non-empty) disables color unless -C is explicit
+	//   -M disables color
+	//   -C forces color
+	//   otherwise auto-detect from terminal
+	noColorEnv := os.Getenv("NO_COLOR") != ""
+	switch {
+	case opts.monoOutput:
+		p.colorMode = false
+	case opts.colorOutput:
+		p.colorMode = true
+	case noColorEnv:
+		p.colorMode = false
+	default:
+		p.colorMode = json.IsColorTerminal(os.Stdout)
+	}
+
+	// Build the output writer
+	var baseWriter io.Writer
+	if p.colorMode {
+		baseWriter = colorable.NewColorable(os.Stdout)
+	} else {
+		baseWriter = os.Stdout
+	}
+	p.bw = bufio.NewWriter(baseWriter)
+	p.w = p.bw
+
+	// Build color config (respects JN_COLORS env variable)
+	if p.colorMode {
+		p.colors = resolveColors()
+	}
+
+	return p
+}
+
+// resolveColors returns a Colors config, optionally customised via JN_COLORS.
+// JN_COLORS format (colon-separated, 8 fields): null:false:true:numbers:strings:arrays:objects:keys
+// Each field is a terminal escape code like "1;31".
+func resolveColors() *json.Colors {
+	clrs := json.DefaultColors()
+	jnColors := os.Getenv("JN_COLORS")
+	if jnColors == "" {
+		return clrs
+	}
+	parts := strings.Split(jnColors, ":")
+	applyColor := func(idx int, target *json.Color) {
+		if idx < len(parts) && parts[idx] != "" {
+			*target = json.Color("\x1b[" + parts[idx] + "m")
+		}
+	}
+	applyColor(0, &clrs.Null)   // null
+	applyColor(1, &clrs.Bool)   // false (true uses same field)
+	applyColor(3, &clrs.Number) // numbers
+	applyColor(4, &clrs.String) // strings
+	applyColor(5, &clrs.Punc)   // arrays  (brackets)
+	applyColor(7, &clrs.Key)    // object keys
+	return clrs
 }
 
 func (p *printer) print(v any) error {
 	p.lastVal = v
 	p.hasValue = true
 
-	if p.opts.rawOutput {
+	// Raw output: emit the string value without JSON encoding
+	if p.opts.rawOutput || p.opts.rawOutput0 {
 		if s, ok := v.(string); ok {
-			fmt.Print(s)
-			if !p.opts.joinOutput {
-				fmt.Println()
+			if _, err := fmt.Fprint(p.w, s); err != nil {
+				return err
 			}
-			return nil
+			switch {
+			case p.opts.rawOutput0:
+				if _, err := p.w.Write([]byte{0}); err != nil {
+					return err
+				}
+			case !p.opts.joinOutput:
+				if _, err := p.w.Write([]byte{'\n'}); err != nil {
+					return err
+				}
+			}
+			return p.flushIfUnbuffered()
 		}
+		// Non-string values fall through to normal JSON encoding
 	}
 
-	var (
-		out []byte
-		err error
-	)
-	if p.opts.compact {
-		out, err = json.Marshal(v)
-	} else {
-		ind := strings.Repeat(" ", clampIndent(p.opts.indentN))
-		if p.opts.tabIndent {
-			ind = "\t"
-		}
-		out, err = json.MarshalIndent(v, "", ind)
-	}
+	// Encode to JSON (with optional color)
+	out, err := p.encodeJSON(v)
 	if err != nil {
 		return fmt.Errorf("marshal output: %w", err)
 	}
-
-	fmt.Print(string(out))
+	if _, err := p.w.Write(out); err != nil {
+		return err
+	}
 	if !p.opts.joinOutput {
-		fmt.Println()
+		if _, err := p.w.Write([]byte{'\n'}); err != nil {
+			return err
+		}
+	}
+	return p.flushIfUnbuffered()
+}
+
+// encodeJSON encodes v to JSON bytes, applying color and indentation as configured.
+// The trailing newline that json.Encoder.Encode appends is stripped.
+func (p *printer) encodeJSON(v any) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	if p.colorMode && p.colors != nil {
+		enc.SetColors(p.colors)
+	}
+	if !p.opts.compact && p.indent != "" {
+		enc.SetIndent("", p.indent)
+	}
+	if err := enc.Encode(v); err != nil {
+		return nil, err
+	}
+	// json.Encoder.Encode always appends '\n'; strip it so callers control line endings
+	b := buf.Bytes()
+	if len(b) > 0 && b[len(b)-1] == '\n' {
+		b = b[:len(b)-1]
+	}
+	return b, nil
+}
+
+// flushIfUnbuffered flushes the buffered writer immediately when --unbuffered is set.
+func (p *printer) flushIfUnbuffered() error {
+	if p.opts.unbuffered && p.bw != nil {
+		return p.bw.Flush()
+	}
+	return nil
+}
+
+// flush flushes any buffered output. Must be called after all printing is done.
+func (p *printer) flush() error {
+	if p.bw != nil {
+		return p.bw.Flush()
 	}
 	return nil
 }

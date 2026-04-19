@@ -82,6 +82,7 @@ jn -e '$.active' record.json && echo "active"
 |------|-------|-------------|
 | `--compact` | `-c` | Compact JSON output (no indentation) |
 | `--raw-output` | `-r` | Output raw strings without JSON quotes |
+| `--raw-output0` | | Like `-r` but use NUL (`\0`) as record separator instead of newline |
 | `--raw-input` | `-R` | Read each input line as a raw string |
 | `--null-input` | `-n` | Use null as input (evaluate without data) |
 | `--exit-status` | `-e` | Exit 5 if last output is null or false |
@@ -91,6 +92,9 @@ jn -e '$.active' record.json && echo "active"
 | `--tab` | | Use tab indentation (overrides `--indent`) |
 | `--indent <n>` | | Indentation width in spaces (0–7, default 2) |
 | `--sort-keys` | `-S` | Sort object keys (no-op: Go already sorts) |
+| `--color-output` | `-C` | Force colorized output even when not writing to a terminal |
+| `--monochrome-output` | `-M` | Disable colorized output |
+| `--unbuffered` | | Flush output after each JSON object is printed |
 | `--data <json>` | | Inline JSON input data string |
 | `--data-file <file>` | | Path to JSON input file |
 | `--arg name=value` | | Bind `$name` to a string value |
@@ -138,6 +142,39 @@ Description: Great-circle distance in kilometres.
 ```sh
 jn version
 # jn version v1.2.3
+```
+
+---
+
+## Color Output
+
+`jn` automatically colorizes JSON output (similar to `jq`) when writing to a
+terminal, using colors close to jq's default scheme. Color is disabled
+automatically when stdout is redirected to a pipe or file.
+
+| Flag | Behavior |
+|------|----------|
+| _(default)_ | Color when stdout is a TTY, monochrome otherwise |
+| `-C` / `--color-output` | Force color even when not writing to a terminal |
+| `-M` / `--monochrome-output` | Disable color unconditionally |
+| `NO_COLOR=1` (env) | Disables color unless `-C` is also given |
+
+### `JN_COLORS` — Custom color scheme
+
+Set the `JN_COLORS` environment variable to a colon-separated list of eight
+ANSI escape code fragments (same format as jq's `JQ_COLORS`):
+
+```
+null:false:true:numbers:strings:arrays:objects:object-keys
+```
+
+Each value is an ANSI SGR parameter string such as `"1;31"` (bright red).
+Fields left empty keep the default color.
+
+```sh
+# Example: red strings, cyan numbers
+export JN_COLORS="::::::1;31:0;36"
+echo '{"x":42,"y":"hello"}' | jn -C '$'
 ```
 
 ---
@@ -223,5 +260,7 @@ jn --argjson 'n=5' '$take($sort($.scores), $n)' data.json
 | From file (`-f`) | ✓ | ✓ |
 | `--arg` / `--argjson` | ✓ | ✓ (name=value format) |
 | Streaming large files | ✓ | ✓ (json.Decoder) |
-| Color output | ✓ | — |
+| Color output (`-C`/`-M`) | ✓ | ✓ (auto-detected; `JN_COLORS` env) |
+| `--raw-output0` | ✓ | ✓ |
+| `--unbuffered` | ✓ | ✓ |
 | `@base64`, `@csv` formats | ✓ | — (use extension functions) |

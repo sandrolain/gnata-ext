@@ -63,7 +63,7 @@ Extended documentation and patterns are in `docs/guides/`:
 | [catalog.md](docs/guides/catalog.md) | Runtime function discovery and introspection |
 | [middleware.md](docs/guides/middleware.md) | Logging, memoization, rate limiting |
 | [testing.md](docs/guides/testing.md) | Table-driven tests with `exttesting` |
-| [cli.md](docs/guides/cli.md) | `jn` CLI — JSONata processor inspired by jq |
+| [cli.md](docs/guides/cli.md) | `jn` CLI — JSONata processor inspired by jq, with color output |
 | [development.md](docs/guides/development.md) | Building, testing, contributing |
 
 ---
