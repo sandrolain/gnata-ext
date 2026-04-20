@@ -121,6 +121,14 @@ var catalog = []FuncMeta{
 	{Name: "has", Package: "extpath", Signature: "(obj: object, path: string) → boolean", Description: "Returns true if path exists and is non-null."},
 	{Name: "flattenObj", Package: "extpath", Signature: "(obj: object [, sep: string]) → object", Description: "Flattens a nested object using sep as key separator."},
 	{Name: "expandObj", Package: "extpath", Signature: "(obj: object [, sep: string]) → object", Description: "Expands a flat object with compound keys to nested."},
+	// extsemver
+	{Name: "semverParse", Package: "extsemver", Signature: "(v: string) → object", Description: "Parses a semantic version string into an object."},
+	{Name: "semverCompare", Package: "extsemver", Signature: "(a: string, b: string) → number", Description: "Compares two version strings: -1, 0, or 1."},
+	{Name: "semverSatisfies", Package: "extsemver", Signature: "(v: string, c: string) → boolean", Description: "True if version v satisfies the constraint c."},
+	{Name: "semverBump", Package: "extsemver", Signature: "(v: string, part: string) → string", Description: "Bumps the major, minor, or patch component."},
+	{Name: "semverSort", Package: "extsemver", Signature: "(arr: array) → array", Description: "Sorts an array of version strings ascending."},
+	{Name: "semverMax", Package: "extsemver", Signature: "(arr: array) → string", Description: "Returns the highest version string."},
+	{Name: "semverMin", Package: "extsemver", Signature: "(arr: array) → string", Description: "Returns the lowest version string."},
 	// extstring
 	{Name: "startsWith", Package: "extstring", Signature: "(str: string, prefix: string) → boolean", Description: "Returns true if str starts with prefix."},
 	{Name: "endsWith", Package: "extstring", Signature: "(str: string, suffix: string) → boolean", Description: "Returns true if str ends with suffix."},
