@@ -17,6 +17,7 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extobject"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extpath"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extstring"
+	"github.com/sandrolain/gnata-ext/pkg/ext/exttext"
 	"github.com/sandrolain/gnata-ext/pkg/ext/exttypes"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extvalidate"
 )
@@ -65,6 +66,7 @@ func (b *EnvBuilder) WithNumericFuncs() *EnvBuilder  { return b.merge(extnumeric
 func (b *EnvBuilder) WithObjectFuncs() *EnvBuilder   { return b.merge(extobject.All()) }
 func (b *EnvBuilder) WithPathFuncs() *EnvBuilder     { return b.merge(extpath.All()) }
 func (b *EnvBuilder) WithStringFuncs() *EnvBuilder   { return b.merge(extstring.All()) }
+func (b *EnvBuilder) WithTextFuncs() *EnvBuilder     { return b.merge(exttext.All()) }
 func (b *EnvBuilder) WithTypesFuncs() *EnvBuilder    { return b.merge(exttypes.All()) }
 func (b *EnvBuilder) WithValidateFuncs() *EnvBuilder { return b.merge(extvalidate.All()) }
 

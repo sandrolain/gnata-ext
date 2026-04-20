@@ -153,6 +153,16 @@ var catalog = []FuncMeta{
 	{Name: "isEmpty", Package: "exttypes", Signature: "(v: any) → boolean", Description: "Returns true for null, empty string, empty array, empty object."},
 	{Name: "default", Package: "exttypes", Signature: "(v: any, d: any) → any", Description: "Returns v if non-null, else d."},
 	{Name: "identity", Package: "exttypes", Signature: "(v: any) → any", Description: "Returns v unchanged."},
+	// exttext
+	{Name: "wordCount", Package: "exttext", Signature: "(s: string) → number", Description: "Number of words in the string."},
+	{Name: "charCount", Package: "exttext", Signature: "(s: string) → number", Description: "Number of Unicode code points in the string."},
+	{Name: "sentenceCount", Package: "exttext", Signature: "(s: string) → number", Description: "Approximate number of sentences."},
+	{Name: "readingTime", Package: "exttext", Signature: "(s: string) → number", Description: "Estimated reading time in seconds at 200 wpm."},
+	{Name: "wordFrequency", Package: "exttext", Signature: "(s: string) → object", Description: "Map of word to occurrence count."},
+	{Name: "ngrams", Package: "exttext", Signature: "(s: string, n: number) → array", Description: "Array of n-gram strings."},
+	{Name: "excerpt", Package: "exttext", Signature: "(s: string, maxLen: number) → string", Description: "Truncate string to maxLen runes, appending ellipsis if truncated."},
+	{Name: "stripHTML", Package: "exttext", Signature: "(s: string) → string", Description: "Removes HTML tags from a string."},
+	{Name: "normalizeWhitespace", Package: "exttext", Signature: "(s: string) → string", Description: "Collapses consecutive whitespace to a single space."},
 	// extvalidate
 	{Name: "isEmail", Package: "extvalidate", Signature: "(str: string) → boolean", Description: "Returns true if str is a valid email address."},
 	{Name: "isURL", Package: "extvalidate", Signature: "(str: string) → boolean", Description: "Returns true if str is a valid http/https/ftp URL."},
