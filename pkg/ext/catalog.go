@@ -61,6 +61,15 @@ var catalog = []FuncMeta{
 	{Name: "switch", Package: "extlogic", Signature: "(v: any, cases: object [, default: any]) → any", Description: "Returns the matching cases entry, or default."},
 	{Name: "coalesce", Package: "extlogic", Signature: "(v1: any, ...) → any", Description: "Returns the first non-nil, non-empty argument."},
 	{Name: "tap", Package: "extlogic", Signature: "(v: any) → any", Description: "Returns v unchanged (pass-through helper)."},
+	// exturi
+	{Name: "uriParse", Package: "exturi", Signature: "(url: string) → object", Description: "Decomposes a URL into {scheme, user, password, host, port, path, query, fragment}."},
+	{Name: "uriBuild", Package: "exturi", Signature: "(parts: object) → string", Description: "Builds a URL string from a parts object."},
+	{Name: "uriJoin", Package: "exturi", Signature: "(base: string, ref: string) → string", Description: "Resolves a relative URL against a base URL."},
+	{Name: "queryParse", Package: "exturi", Signature: "(qs: string) → object", Description: "Parses a query string into an object."},
+	{Name: "queryBuild", Package: "exturi", Signature: "(obj: object) → string", Description: "Serializes an object to a URL-encoded query string."},
+	{Name: "uriGetPath", Package: "exturi", Signature: "(url: string) → string", Description: "Extracts the path component from a URL."},
+	{Name: "uriGetQuery", Package: "exturi", Signature: "(url: string) → object", Description: "Extracts and parses the query string from a URL."},
+	{Name: "uriSetQuery", Package: "exturi", Signature: "(url: string, params: object) → string", Description: "Replaces the query string of a URL with the given params."},
 	// extnet
 	{Name: "ipVersion", Package: "extnet", Signature: "(str: string) → number", Description: "Returns 4, 6, or -1 for the IP version."},
 	{Name: "isPrivateIP", Package: "extnet", Signature: "(str: string) → boolean", Description: "Returns true for private/loopback/link-local addresses."},
