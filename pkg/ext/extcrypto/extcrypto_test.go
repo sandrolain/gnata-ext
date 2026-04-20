@@ -194,3 +194,77 @@ func TestHMACAllAlgorithms(t *testing.T) {
 		}
 	}
 }
+func TestRandomBytes(t *testing.T) {
+	f := extcrypto.RandomBytes()
+	got, err := f([]any{float64(16)}, nil)
+	if err != nil {
+		t.Fatalf("randomBytes: unexpected error: %v", err)
+	}
+	s := got.(string)
+	if len(s) != 32 { // 16 bytes = 32 hex chars
+		t.Errorf("randomBytes: expected 32 hex chars, got %d", len(s))
+	}
+	// two calls should produce different results
+	got2, _ := f([]any{float64(16)}, nil)
+	if got2.(string) == s {
+		t.Error("randomBytes: two calls should produce different results")
+	}
+}
+
+func TestRandomBytesErrors(t *testing.T) {
+	f := extcrypto.RandomBytes()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("randomBytes: expected error for 0 args")
+	}
+	if _, err := f([]any{"bad"}, nil); err == nil {
+		t.Error("randomBytes: expected error for non-integer")
+	}
+	if _, err := f([]any{float64(0)}, nil); err == nil {
+		t.Error("randomBytes: expected error for n=0")
+	}
+}
+
+func TestBase64URL(t *testing.T) {
+	f := extcrypto.Base64URL()
+	got, err := f([]any{"hello world"}, nil)
+	if err != nil {
+		t.Fatalf("base64url: unexpected error: %v", err)
+	}
+	if got != "aGVsbG8gd29ybGQ" {
+		t.Errorf("base64url: got %v, want aGVsbG8gd29ybGQ", got)
+	}
+}
+
+func TestBase64URLErrors(t *testing.T) {
+	f := extcrypto.Base64URL()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("base64url: expected error for 0 args")
+	}
+	if _, err := f([]any{42}, nil); err == nil {
+		t.Error("base64url: expected error for non-string")
+	}
+}
+
+func TestUnbase64URL(t *testing.T) {
+	f := extcrypto.Unbase64URL()
+	got, err := f([]any{"aGVsbG8gd29ybGQ"}, nil)
+	if err != nil {
+		t.Fatalf("unbase64url: unexpected error: %v", err)
+	}
+	if got != "hello world" {
+		t.Errorf("unbase64url: got %v, want 'hello world'", got)
+	}
+}
+
+func TestUnbase64URLErrors(t *testing.T) {
+	f := extcrypto.Unbase64URL()
+	if _, err := f([]any{}, nil); err == nil {
+		t.Error("unbase64url: expected error for 0 args")
+	}
+	if _, err := f([]any{42}, nil); err == nil {
+		t.Error("unbase64url: expected error for non-string")
+	}
+	if _, err := f([]any{"!!!invalid!!!"}, nil); err == nil {
+		t.Error("unbase64url: expected error for invalid base64")
+	}
+}

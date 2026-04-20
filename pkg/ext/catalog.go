@@ -51,6 +51,9 @@ var catalog = []FuncMeta{
 	{Name: "uuid", Package: "extcrypto", Signature: "() → string", Description: "Generates a random UUID v4."},
 	{Name: "hash", Package: "extcrypto", Signature: "(algorithm: string, value: string) → string", Description: "Hex-encoded cryptographic hash."},
 	{Name: "hmac", Package: "extcrypto", Signature: "(algorithm: string, key: string, value: string) → string", Description: "Hex-encoded HMAC."},
+	{Name: "randomBytes", Package: "extcrypto", Signature: "(n: number) → string", Description: "Returns n random bytes as a hex string."},
+	{Name: "base64url", Package: "extcrypto", Signature: "(str: string) → string", Description: "Base64url-encodes str without padding."},
+	{Name: "unbase64url", Package: "extcrypto", Signature: "(str: string) → string", Description: "Decodes a base64url-encoded string."},
 	// extdatetime
 	{Name: "dateAdd", Package: "extdatetime", Signature: "(timestamp: number, amount: number, unit: string) → number", Description: "Adds time units to a Unix-ms timestamp."},
 	{Name: "dateDiff", Package: "extdatetime", Signature: "(t1: number, t2: number, unit: string) → number", Description: "Whole-unit difference between two timestamps."},

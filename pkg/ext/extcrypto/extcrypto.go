@@ -5,6 +5,9 @@
 //   - $uuid()                          – random UUID v4
 //   - $hash(algorithm, value)          – hex-encoded hash (md5/sha1/sha256/sha384/sha512)
 //   - $hmac(algorithm, key, value)     – hex-encoded HMAC
+//   - $randomBytes(n)                  – n random bytes as hex string
+//   - $base64url(str)                  – base64url-encode a string (no padding)
+//   - $unbase64url(str)                – base64url-decode to string
 package extcrypto
 
 import (
@@ -14,6 +17,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"hash"
@@ -21,14 +25,18 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/recolabs/gnata"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extutil"
 )
 
 // All returns a map of all extended crypto functions.
 func All() map[string]gnata.CustomFunc {
 	return map[string]gnata.CustomFunc{
-		"uuid": UUID(),
-		"hash": Hash(),
-		"hmac": HMAC(),
+		"uuid":        UUID(),
+		"hash":        Hash(),
+		"hmac":        HMAC(),
+		"randomBytes": RandomBytes(),
+		"base64url":   Base64URL(),
+		"unbase64url": Unbase64URL(),
 	}
 }
 
@@ -120,5 +128,58 @@ func newHasher(algorithm string) (hash.Hash, error) {
 		return sha512.New(), nil
 	default:
 		return nil, fmt.Errorf("unsupported algorithm %q", algorithm)
+	}
+}
+
+// RandomBytes returns the CustomFunc for $randomBytes(n).
+// Returns n random bytes as a lowercase hex string.
+func RandomBytes() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$randomBytes: requires 1 argument (n)")
+		}
+		n, ok := extutil.ToInt(args[0])
+		if !ok || n <= 0 {
+			return nil, fmt.Errorf("$randomBytes: n must be a positive integer")
+		}
+		buf := make([]byte, n)
+		if _, err := rand.Read(buf); err != nil {
+			return nil, fmt.Errorf("$randomBytes: %w", err)
+		}
+		return hex.EncodeToString(buf), nil
+	}
+}
+
+// Base64URL returns the CustomFunc for $base64url(str).
+// Base64url-encodes str without padding.
+func Base64URL() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$base64url: requires 1 argument")
+		}
+		s, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$base64url: argument must be a string")
+		}
+		return base64.RawURLEncoding.EncodeToString([]byte(s)), nil
+	}
+}
+
+// Unbase64URL returns the CustomFunc for $unbase64url(str).
+// Decodes a base64url string (no padding) to a string.
+func Unbase64URL() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$unbase64url: requires 1 argument")
+		}
+		s, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$unbase64url: argument must be a string")
+		}
+		b, err := base64.RawURLEncoding.DecodeString(s)
+		if err != nil {
+			return nil, fmt.Errorf("$unbase64url: %w", err)
+		}
+		return string(b), nil
 	}
 }
