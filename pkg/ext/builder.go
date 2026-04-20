@@ -3,6 +3,7 @@ package ext
 import (
 	"github.com/recolabs/gnata"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extarray"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extcolor"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extcrypto"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extdatetime"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extdiff"
@@ -54,6 +55,7 @@ func (b *EnvBuilder) merge(pkg map[string]gnata.CustomFunc) *EnvBuilder {
 // WithAllFuncs adds every extension function (equivalent to AllFuncs()).
 func (b *EnvBuilder) WithAllFuncs() *EnvBuilder      { return b.merge(AllFuncs()) }
 func (b *EnvBuilder) WithArrayFuncs() *EnvBuilder    { return b.merge(extarray.All()) }
+func (b *EnvBuilder) WithColorFuncs() *EnvBuilder    { return b.merge(extcolor.All()) }
 func (b *EnvBuilder) WithCryptoFuncs() *EnvBuilder   { return b.merge(extcrypto.All()) }
 func (b *EnvBuilder) WithDatetimeFuncs() *EnvBuilder { return b.merge(extdatetime.All()) }
 func (b *EnvBuilder) WithDiffFuncs() *EnvBuilder     { return b.merge(extdiff.All()) }

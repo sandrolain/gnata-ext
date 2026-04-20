@@ -27,6 +27,16 @@ var catalog = []FuncMeta{
 	{Name: "range", Package: "extarray", Signature: "(start: number, end: number [, step: number]) → array", Description: "Generates a numeric range."},
 	{Name: "zipLongest", Package: "extarray", Signature: "(a: array, b: array [, fill: any]) → array", Description: "Zips two arrays, padding the shorter one."},
 	{Name: "window", Package: "extarray", Signature: "(array, size: number [, step: number]) → array", Description: "Produces sliding windows over an array."},
+	// extcolor
+	{Name: "colorParse", Package: "extcolor", Signature: "(s: string) → object", Description: "Parse a CSS color string (#rgb, #rrggbb, rgb(), rgba()) into {r,g,b,a}."},
+	{Name: "colorToHex", Package: "extcolor", Signature: "(obj: object) → string", Description: "Convert {r,g,b} to a hex color string."},
+	{Name: "colorToRGB", Package: "extcolor", Signature: "(obj: object) → string", Description: "Convert {r,g,b,a?} to rgb() or rgba() CSS string."},
+	{Name: "colorToHSL", Package: "extcolor", Signature: "(obj: object) → object", Description: "Convert {r,g,b} to {h,s,l} (HSL color model)."},
+	{Name: "colorMix", Package: "extcolor", Signature: "(a: object, b: object, t: number) → object", Description: "Linear blend of two colors at factor t (0–1)."},
+	{Name: "colorLighten", Package: "extcolor", Signature: "(obj: object, amount: number) → object", Description: "Increase HSL lightness by amount (0–1)."},
+	{Name: "colorDarken", Package: "extcolor", Signature: "(obj: object, amount: number) → object", Description: "Decrease HSL lightness by amount (0–1)."},
+	{Name: "colorContrast", Package: "extcolor", Signature: "(fg: object, bg: object) → number", Description: "WCAG contrast ratio between two colors."},
+	{Name: "colorLuminance", Package: "extcolor", Signature: "(obj: object) → number", Description: "Relative luminance (0–1) per WCAG 2.1."},
 	// extcrypto
 	{Name: "uuid", Package: "extcrypto", Signature: "() → string", Description: "Generates a random UUID v4."},
 	{Name: "hash", Package: "extcrypto", Signature: "(algorithm: string, value: string) → string", Description: "Hex-encoded cryptographic hash."},

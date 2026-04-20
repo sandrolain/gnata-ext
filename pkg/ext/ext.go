@@ -11,6 +11,7 @@ package ext
 import (
 	"github.com/recolabs/gnata"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extarray"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extcolor"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extcrypto"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extdatetime"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extdiff"
@@ -37,6 +38,7 @@ import (
 func AllFuncs() map[string]gnata.CustomFunc {
 	sources := []map[string]gnata.CustomFunc{
 		extarray.All(),
+		extcolor.All(),
 		extcrypto.All(),
 		extdatetime.All(),
 		extdiff.All(),
