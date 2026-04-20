@@ -532,3 +532,362 @@ func TestWindowErrors(t *testing.T) {
 		t.Error("window: expected error for non-numeric step")
 	}
 }
+
+func TestCompact(t *testing.T) {
+	fn := extarray.Compact()
+	got, err := fn([]any{[]any{float64(1), nil, false, float64(0), "", float64(2)}}, nil)
+	if err != nil {
+		t.Errorf("compact: unexpected error: %v", err)
+	}
+	arr := got.([]any)
+	if len(arr) != 2 || arr[0] != float64(1) || arr[1] != float64(2) {
+		t.Errorf("compact: got %v, want [1 2]", arr)
+	}
+}
+
+func TestCompactErrors(t *testing.T) {
+	fn := extarray.Compact()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("compact: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array"}, nil); err == nil {
+		t.Error("compact: expected error for non-array")
+	}
+}
+
+func TestGroupByKey(t *testing.T) {
+	fn := extarray.GroupByKey()
+	arr := []any{
+		map[string]any{"type": "a", "val": float64(1)},
+		map[string]any{"type": "b", "val": float64(2)},
+		map[string]any{"type": "a", "val": float64(3)},
+	}
+	got, err := fn([]any{arr, "type"}, nil)
+	if err != nil {
+		t.Errorf("groupByKey: unexpected error: %v", err)
+	}
+	obj := got.(map[string]any)
+	if len(obj["a"].([]any)) != 2 {
+		t.Errorf("groupByKey: expected 2 items in group 'a'")
+	}
+	if len(obj["b"].([]any)) != 1 {
+		t.Errorf("groupByKey: expected 1 item in group 'b'")
+	}
+}
+
+func TestGroupByKeyErrors(t *testing.T) {
+	fn := extarray.GroupByKey()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("groupByKey: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array", "key"}, nil); err == nil {
+		t.Error("groupByKey: expected error for non-array")
+	}
+	if _, err := fn([]any{[]any{}, 42}, nil); err == nil {
+		t.Error("groupByKey: expected error for non-string key")
+	}
+	if _, err := fn([]any{[]any{"not-obj"}, "key"}, nil); err == nil {
+		t.Error("groupByKey: expected error for non-object element")
+	}
+}
+
+func TestSortBy(t *testing.T) {
+	fn := extarray.SortBy()
+	arr := []any{
+		map[string]any{"name": "charlie"},
+		map[string]any{"name": "alice"},
+		map[string]any{"name": "bob"},
+	}
+	got, err := fn([]any{arr, "name"}, nil)
+	if err != nil {
+		t.Errorf("sortBy: unexpected error: %v", err)
+	}
+	result := got.([]any)
+	names := []string{"alice", "bob", "charlie"}
+	for i, n := range names {
+		obj := result[i].(map[string]any)
+		if obj["name"] != n {
+			t.Errorf("sortBy[%d]: got %v, want %v", i, obj["name"], n)
+		}
+	}
+	// desc
+	got2, _ := fn([]any{arr, "name", true}, nil)
+	result2 := got2.([]any)
+	names2 := []string{"charlie", "bob", "alice"}
+	for i, n := range names2 {
+		obj := result2[i].(map[string]any)
+		if obj["name"] != n {
+			t.Errorf("sortBy desc[%d]: got %v, want %v", i, obj["name"], n)
+		}
+	}
+}
+
+func TestSortByErrors(t *testing.T) {
+	fn := extarray.SortBy()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("sortBy: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array", "key"}, nil); err == nil {
+		t.Error("sortBy: expected error for non-array")
+	}
+	if _, err := fn([]any{[]any{}, 42}, nil); err == nil {
+		t.Error("sortBy: expected error for non-string key")
+	}
+	if _, err := fn([]any{[]any{}, "key", "bad"}, nil); err == nil {
+		t.Error("sortBy: expected error for non-bool desc")
+	}
+}
+
+func TestUniqueBy(t *testing.T) {
+	fn := extarray.UniqueBy()
+	arr := []any{
+		map[string]any{"id": float64(1), "val": "a"},
+		map[string]any{"id": float64(1), "val": "b"},
+		map[string]any{"id": float64(2), "val": "c"},
+	}
+	got, err := fn([]any{arr, "id"}, nil)
+	if err != nil {
+		t.Errorf("uniqueBy: unexpected error: %v", err)
+	}
+	result := got.([]any)
+	if len(result) != 2 {
+		t.Errorf("uniqueBy: got %d elements, want 2", len(result))
+	}
+}
+
+func TestUniqueByErrors(t *testing.T) {
+	fn := extarray.UniqueBy()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("uniqueBy: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array", "key"}, nil); err == nil {
+		t.Error("uniqueBy: expected error for non-array")
+	}
+	if _, err := fn([]any{[]any{}, 42}, nil); err == nil {
+		t.Error("uniqueBy: expected error for non-string key")
+	}
+	if _, err := fn([]any{[]any{"not-obj"}, "key"}, nil); err == nil {
+		t.Error("uniqueBy: expected error for non-object element")
+	}
+}
+
+func TestSumByKey(t *testing.T) {
+	fn := extarray.SumByKey()
+	arr := []any{
+		map[string]any{"type": "a", "amount": float64(10)},
+		map[string]any{"type": "b", "amount": float64(5)},
+		map[string]any{"type": "a", "amount": float64(3)},
+	}
+	got, err := fn([]any{arr, "type", "amount"}, nil)
+	if err != nil {
+		t.Errorf("sumByKey: unexpected error: %v", err)
+	}
+	obj := got.(map[string]any)
+	if obj["a"] != float64(13) {
+		t.Errorf("sumByKey a: got %v, want 13", obj["a"])
+	}
+	if obj["b"] != float64(5) {
+		t.Errorf("sumByKey b: got %v, want 5", obj["b"])
+	}
+}
+
+func TestSumByKeyErrors(t *testing.T) {
+	fn := extarray.SumByKey()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("sumByKey: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array", "k", "v"}, nil); err == nil {
+		t.Error("sumByKey: expected error for non-array")
+	}
+	if _, err := fn([]any{[]any{}, 42, "v"}, nil); err == nil {
+		t.Error("sumByKey: expected error for non-string key")
+	}
+	if _, err := fn([]any{[]any{"not-obj"}, "k", "v"}, nil); err == nil {
+		t.Error("sumByKey: expected error for non-object element")
+	}
+}
+
+func TestCountByKey(t *testing.T) {
+	fn := extarray.CountByKey()
+	arr := []any{
+		map[string]any{"type": "a"},
+		map[string]any{"type": "b"},
+		map[string]any{"type": "a"},
+	}
+	got, err := fn([]any{arr, "type"}, nil)
+	if err != nil {
+		t.Errorf("countByKey: unexpected error: %v", err)
+	}
+	obj := got.(map[string]any)
+	if obj["a"] != float64(2) {
+		t.Errorf("countByKey a: got %v, want 2", obj["a"])
+	}
+	if obj["b"] != float64(1) {
+		t.Errorf("countByKey b: got %v, want 1", obj["b"])
+	}
+}
+
+func TestCountByKeyErrors(t *testing.T) {
+	fn := extarray.CountByKey()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("countByKey: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array", "key"}, nil); err == nil {
+		t.Error("countByKey: expected error for non-array")
+	}
+	if _, err := fn([]any{[]any{}, 42}, nil); err == nil {
+		t.Error("countByKey: expected error for non-string key")
+	}
+	if _, err := fn([]any{[]any{"not-obj"}, "key"}, nil); err == nil {
+		t.Error("countByKey: expected error for non-object element")
+	}
+}
+
+func TestRotate(t *testing.T) {
+	fn := extarray.Rotate()
+	cases := []struct {
+		arr  []any
+		n    float64
+		want []any
+	}{
+		{[]any{float64(1), float64(2), float64(3), float64(4)}, 1, []any{float64(2), float64(3), float64(4), float64(1)}},
+		{[]any{float64(1), float64(2), float64(3)}, -1, []any{float64(3), float64(1), float64(2)}},
+		{[]any{float64(1), float64(2)}, 0, []any{float64(1), float64(2)}},
+		{[]any{}, 2, []any{}},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{c.arr, c.n}, nil)
+		if err != nil {
+			t.Errorf("rotate %v by %v: unexpected error: %v", c.arr, c.n, err)
+			continue
+		}
+		arr := got.([]any)
+		for i, w := range c.want {
+			if arr[i] != w {
+				t.Errorf("rotate[%d]: got %v, want %v", i, arr[i], w)
+			}
+		}
+	}
+}
+
+func TestRotateErrors(t *testing.T) {
+	fn := extarray.Rotate()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("rotate: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array", float64(1)}, nil); err == nil {
+		t.Error("rotate: expected error for non-array")
+	}
+	if _, err := fn([]any{[]any{}, "bad"}, nil); err == nil {
+		t.Error("rotate: expected error for non-integer n")
+	}
+}
+
+func TestIndexof(t *testing.T) {
+	fn := extarray.Indexof()
+	arr := []any{float64(10), float64(20), float64(30)}
+	cases := []struct {
+		val  any
+		want float64
+	}{
+		{float64(20), 1},
+		{float64(99), -1},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{arr, c.val}, nil)
+		if err != nil {
+			t.Errorf("indexof: unexpected error: %v", err)
+		}
+		if got != c.want {
+			t.Errorf("indexof(%v): got %v, want %v", c.val, got, c.want)
+		}
+	}
+}
+
+func TestIndexofErrors(t *testing.T) {
+	fn := extarray.Indexof()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("indexof: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array", float64(1)}, nil); err == nil {
+		t.Error("indexof: expected error for non-array")
+	}
+}
+
+func TestTranspose(t *testing.T) {
+	fn := extarray.Transpose()
+	matrix := []any{
+		[]any{float64(1), float64(2), float64(3)},
+		[]any{float64(4), float64(5), float64(6)},
+	}
+	got, err := fn([]any{matrix}, nil)
+	if err != nil {
+		t.Errorf("transpose: unexpected error: %v", err)
+	}
+	result := got.([]any)
+	if len(result) != 3 {
+		t.Fatalf("transpose: got %d cols, want 3", len(result))
+	}
+	want := [][]float64{{1, 4}, {2, 5}, {3, 6}}
+	for c, col := range want {
+		arr := result[c].([]any)
+		for r, v := range col {
+			if arr[r] != v {
+				t.Errorf("transpose[%d][%d]: got %v, want %v", c, r, arr[r], v)
+			}
+		}
+	}
+	// empty
+	got2, _ := fn([]any{[]any{}}, nil)
+	if len(got2.([]any)) != 0 {
+		t.Errorf("transpose empty: got non-empty")
+	}
+}
+
+func TestTransposeErrors(t *testing.T) {
+	fn := extarray.Transpose()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("transpose: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array"}, nil); err == nil {
+		t.Error("transpose: expected error for non-array")
+	}
+	if _, err := fn([]any{[]any{"not-row"}}, nil); err == nil {
+		t.Error("transpose: expected error for non-array row")
+	}
+}
+
+func TestAdjacentPairs(t *testing.T) {
+	fn := extarray.AdjacentPairs()
+	arr := []any{float64(1), float64(2), float64(3), float64(4)}
+	got, err := fn([]any{arr}, nil)
+	if err != nil {
+		t.Errorf("adjacentPairs: unexpected error: %v", err)
+	}
+	result := got.([]any)
+	if len(result) != 3 {
+		t.Fatalf("adjacentPairs: got %d pairs, want 3", len(result))
+	}
+	pairs := [][2]float64{{1, 2}, {2, 3}, {3, 4}}
+	for i, p := range pairs {
+		pair := result[i].([]any)
+		if pair[0] != p[0] || pair[1] != p[1] {
+			t.Errorf("adjacentPairs[%d]: got %v, want %v", i, pair, p)
+		}
+	}
+	// single element
+	got2, _ := fn([]any{[]any{float64(1)}}, nil)
+	if len(got2.([]any)) != 0 {
+		t.Errorf("adjacentPairs single: got non-empty")
+	}
+}
+
+func TestAdjacentPairsErrors(t *testing.T) {
+	fn := extarray.AdjacentPairs()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("adjacentPairs: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array"}, nil); err == nil {
+		t.Error("adjacentPairs: expected error for non-array")
+	}
+}
