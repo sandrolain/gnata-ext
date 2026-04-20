@@ -16,6 +16,7 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extformat"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extgeo"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extjson"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extlogic"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnet"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnumeric"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extobject"
@@ -35,6 +36,7 @@ func AllFuncs() map[string]gnata.CustomFunc {
 		extformat.All(),
 		extgeo.All(),
 		extjson.All(),
+		extlogic.All(),
 		extnet.All(),
 		extnumeric.All(),
 		extobject.All(),

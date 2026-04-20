@@ -54,6 +54,13 @@ var catalog = []FuncMeta{
 	{Name: "jsonDiff", Package: "extjson", Signature: "(a: any, b: any) → array", Description: "RFC 6902 patch operations describing the diff between a and b."},
 	{Name: "jsonPatch", Package: "extjson", Signature: "(obj: any, ops: array) → any", Description: "Applies RFC 6902 JSON Patch operations."},
 	{Name: "jsonPointer", Package: "extjson", Signature: "(obj: any, pointer: string) → any", Description: "Resolves an RFC 6901 JSON Pointer."},
+	// extlogic
+	{Name: "ifElse", Package: "extlogic", Signature: "(cond: any, then: any, else: any) → any", Description: "Returns then if cond is truthy, otherwise else."},
+	{Name: "when", Package: "extlogic", Signature: "(cond: any, value: any) → any", Description: "Returns value if cond is truthy, otherwise null."},
+	{Name: "unless", Package: "extlogic", Signature: "(cond: any, value: any) → any", Description: "Returns value if cond is falsy, otherwise null."},
+	{Name: "switch", Package: "extlogic", Signature: "(v: any, cases: object [, default: any]) → any", Description: "Returns the matching cases entry, or default."},
+	{Name: "coalesce", Package: "extlogic", Signature: "(v1: any, ...) → any", Description: "Returns the first non-nil, non-empty argument."},
+	{Name: "tap", Package: "extlogic", Signature: "(v: any) → any", Description: "Returns v unchanged (pass-through helper)."},
 	// extnet
 	{Name: "ipVersion", Package: "extnet", Signature: "(str: string) → number", Description: "Returns 4, 6, or -1 for the IP version."},
 	{Name: "isPrivateIP", Package: "extnet", Signature: "(str: string) → boolean", Description: "Returns true for private/loopback/link-local addresses."},
