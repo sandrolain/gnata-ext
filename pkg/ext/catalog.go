@@ -126,6 +126,14 @@ var catalog = []FuncMeta{
 	{Name: "repeat", Package: "extstring", Signature: "(str: string, n: number) → string", Description: "Returns str repeated n times."},
 	{Name: "words", Package: "extstring", Signature: "(str: string) → array", Description: "Splits str into words."},
 	// extstring.template intentionally omitted (duplicate with extformat.template)
+	// extregex
+	{Name: "regexAll", Package: "extregex", Signature: "(str: string, pattern: string) → array", Description: "Returns all non-overlapping matches of pattern in str."},
+	{Name: "regexNamedGroups", Package: "extregex", Signature: "(str: string, pattern: string) → object", Description: "Returns named capture groups as an object."},
+	{Name: "regexSplit", Package: "extregex", Signature: "(str: string, pattern: string) → array", Description: "Splits str at each occurrence of pattern."},
+	{Name: "regexReplaceAll", Package: "extregex", Signature: "(str: string, pattern: string, repl: string) → string", Description: "Replaces all matches of pattern with repl."},
+	{Name: "regexCount", Package: "extregex", Signature: "(str: string, pattern: string) → number", Description: "Returns the number of non-overlapping matches."},
+	{Name: "regexTest", Package: "extregex", Signature: "(str: string, pattern: string) → boolean", Description: "Returns true if pattern matches anywhere in str."},
+	{Name: "regexExtract", Package: "extregex", Signature: "(str: string, pattern: string [, group: number]) → string", Description: "Returns the first match or the specified capture group."},
 	// exttypes
 	{Name: "isString", Package: "exttypes", Signature: "(v: any) → boolean", Description: "Returns true if v is a string."},
 	{Name: "isNumber", Package: "exttypes", Signature: "(v: any) → boolean", Description: "Returns true if v is a number."},

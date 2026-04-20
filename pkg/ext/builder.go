@@ -10,6 +10,7 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extjson"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extlogic"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnet"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extregex"
 	"github.com/sandrolain/gnata-ext/pkg/ext/exturi"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnumeric"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extobject"
@@ -56,6 +57,7 @@ func (b *EnvBuilder) WithGeoFuncs() *EnvBuilder      { return b.merge(extgeo.All
 func (b *EnvBuilder) WithJSONFuncs() *EnvBuilder     { return b.merge(extjson.All()) }
 func (b *EnvBuilder) WithLogicFuncs() *EnvBuilder    { return b.merge(extlogic.All()) }
 func (b *EnvBuilder) WithNetFuncs() *EnvBuilder      { return b.merge(extnet.All()) }
+func (b *EnvBuilder) WithRegexFuncs() *EnvBuilder    { return b.merge(extregex.All()) }
 func (b *EnvBuilder) WithURIFuncs() *EnvBuilder      { return b.merge(exturi.All()) }
 func (b *EnvBuilder) WithNumericFuncs() *EnvBuilder  { return b.merge(extnumeric.All()) }
 func (b *EnvBuilder) WithObjectFuncs() *EnvBuilder   { return b.merge(extobject.All()) }
