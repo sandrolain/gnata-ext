@@ -17,11 +17,22 @@
 //   - $stddev(array)            – population standard deviation
 //   - $percentile(array, p)     – p-th percentile (0–100)
 //   - $mode(array)              – most frequent value(s)
+//   - $product(array)           – product of all numbers
+//   - $cumSum(array)            – cumulative sum array
+//   - $inRange(n, min, max)     – true if min <= n <= max
+//   - $roundTo(n, places)       – round to specified decimal places
+//   - $normalize(array)         – min-max normalize to [0,1]
+//   - $interpolate(a, b, t)     – linear interpolation
+//   - $gcd(a, b)                – greatest common divisor
+//   - $lcm(a, b)                – least common multiple
+//   - $isPrime(n)               – true if n is prime
+//   - $factorial(n)             – n!
 package extnumeric
 
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"sort"
 
 	"github.com/recolabs/gnata"
@@ -31,24 +42,34 @@ import (
 // All returns a map of all extended numeric functions.
 func All() map[string]gnata.CustomFunc {
 	return map[string]gnata.CustomFunc{
-		"log":        Log(),
-		"sign":       Sign(),
-		"trunc":      Trunc(),
-		"clamp":      Clamp(),
-		"sin":        mathFunc1("sin", math.Sin),
-		"cos":        mathFunc1("cos", math.Cos),
-		"tan":        mathFunc1("tan", math.Tan),
-		"asin":       mathFunc1("asin", math.Asin),
-		"acos":       mathFunc1("acos", math.Acos),
-		"atan":       mathFunc1("atan", math.Atan),
-		"atan2":      Atan2(),
-		"pi":         Pi(),
-		"e":          E(),
-		"median":     Median(),
-		"variance":   Variance(),
-		"stddev":     Stddev(),
-		"percentile": Percentile(),
-		"mode":       Mode(),
+		"log":         Log(),
+		"sign":        Sign(),
+		"trunc":       Trunc(),
+		"clamp":       Clamp(),
+		"sin":         mathFunc1("sin", math.Sin),
+		"cos":         mathFunc1("cos", math.Cos),
+		"tan":         mathFunc1("tan", math.Tan),
+		"asin":        mathFunc1("asin", math.Asin),
+		"acos":        mathFunc1("acos", math.Acos),
+		"atan":        mathFunc1("atan", math.Atan),
+		"atan2":       Atan2(),
+		"pi":          Pi(),
+		"e":           E(),
+		"median":      Median(),
+		"variance":    Variance(),
+		"stddev":      Stddev(),
+		"percentile":  Percentile(),
+		"mode":        Mode(),
+		"product":     Product(),
+		"cumSum":      CumSum(),
+		"inRange":     InRange(),
+		"roundTo":     RoundTo(),
+		"normalize":   Normalize(),
+		"interpolate": Interpolate(),
+		"gcd":         GCD(),
+		"lcm":         LCM(),
+		"isPrime":     IsPrime(),
+		"factorial":   Factorial(),
 	}
 }
 
@@ -309,6 +330,261 @@ func Mode() gnata.CustomFunc {
 		}
 		return modes, nil
 	}
+}
+
+// Product returns the CustomFunc for $product(array).
+// Returns the product of all numbers in the array.
+func Product() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$product: requires 1 argument")
+		}
+		nums, err := toFloatSlice("$product", args[0])
+		if err != nil {
+			return nil, err
+		}
+		result := 1.0
+		for _, n := range nums {
+			result *= n
+		}
+		return result, nil
+	}
+}
+
+// CumSum returns the CustomFunc for $cumSum(array).
+// Returns an array where each element is the cumulative sum up to that index.
+func CumSum() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$cumSum: requires 1 argument")
+		}
+		nums, err := toFloatSlice("$cumSum", args[0])
+		if err != nil {
+			return nil, err
+		}
+		result := make([]any, len(nums))
+		sum := 0.0
+		for i, n := range nums {
+			sum += n
+			result[i] = sum
+		}
+		return result, nil
+	}
+}
+
+// InRange returns the CustomFunc for $inRange(n, min, max).
+// Returns true if min <= n <= max.
+func InRange() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 3 {
+			return nil, fmt.Errorf("$inRange: requires 3 arguments")
+		}
+		n, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$inRange: %w", err)
+		}
+		min, err := extutil.ToFloat(args[1])
+		if err != nil {
+			return nil, fmt.Errorf("$inRange: %w", err)
+		}
+		max, err := extutil.ToFloat(args[2])
+		if err != nil {
+			return nil, fmt.Errorf("$inRange: %w", err)
+		}
+		return n >= min && n <= max, nil
+	}
+}
+
+// RoundTo returns the CustomFunc for $roundTo(n, places).
+// Rounds n to the specified number of decimal places.
+func RoundTo() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$roundTo: requires 2 arguments")
+		}
+		n, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$roundTo: %w", err)
+		}
+		places, ok := extutil.ToInt(args[1])
+		if !ok {
+			return nil, fmt.Errorf("$roundTo: places must be an integer")
+		}
+		factor := math.Pow(10, float64(places))
+		return math.Round(n*factor) / factor, nil
+	}
+}
+
+// Normalize returns the CustomFunc for $normalize(array).
+// Returns the array scaled to [0, 1] using min-max normalization.
+func Normalize() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$normalize: requires 1 argument")
+		}
+		nums, err := toFloatSlice("$normalize", args[0])
+		if err != nil {
+			return nil, err
+		}
+		if len(nums) == 0 {
+			return []any{}, nil
+		}
+		min_, max_ := nums[0], nums[0]
+		for _, n := range nums[1:] {
+			if n < min_ {
+				min_ = n
+			}
+			if n > max_ {
+				max_ = n
+			}
+		}
+		result := make([]any, len(nums))
+		if min_ == max_ {
+			for i := range nums {
+				result[i] = 0.0
+			}
+			return result, nil
+		}
+		for i, n := range nums {
+			result[i] = (n - min_) / (max_ - min_)
+		}
+		return result, nil
+	}
+}
+
+// Interpolate returns the CustomFunc for $interpolate(a, b, t).
+// Returns a + t*(b-a), i.e., linear interpolation between a and b at t.
+func Interpolate() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 3 {
+			return nil, fmt.Errorf("$interpolate: requires 3 arguments")
+		}
+		a, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$interpolate: %w", err)
+		}
+		b, err := extutil.ToFloat(args[1])
+		if err != nil {
+			return nil, fmt.Errorf("$interpolate: %w", err)
+		}
+		t, err := extutil.ToFloat(args[2])
+		if err != nil {
+			return nil, fmt.Errorf("$interpolate: %w", err)
+		}
+		return a + t*(b-a), nil
+	}
+}
+
+// GCD returns the CustomFunc for $gcd(a, b).
+// Returns the greatest common divisor of a and b.
+func GCD() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$gcd: requires 2 arguments")
+		}
+		a, ok1 := extutil.ToInt(args[0])
+		b, ok2 := extutil.ToInt(args[1])
+		if !ok1 || !ok2 {
+			return nil, fmt.Errorf("$gcd: arguments must be integers")
+		}
+		ba := new(big.Int).SetInt64(int64(a))
+		bb := new(big.Int).SetInt64(int64(b))
+		return float64(new(big.Int).GCD(nil, nil, ba, bb).Int64()), nil
+	}
+}
+
+// LCM returns the CustomFunc for $lcm(a, b).
+// Returns the least common multiple of a and b.
+func LCM() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$lcm: requires 2 arguments")
+		}
+		a, ok1 := extutil.ToInt(args[0])
+		b, ok2 := extutil.ToInt(args[1])
+		if !ok1 || !ok2 {
+			return nil, fmt.Errorf("$lcm: arguments must be integers")
+		}
+		if a == 0 || b == 0 {
+			return float64(0), nil
+		}
+		ba := new(big.Int).SetInt64(int64(a))
+		bb := new(big.Int).SetInt64(int64(b))
+		g := new(big.Int).GCD(nil, nil, ba, bb)
+		prod := new(big.Int).Mul(ba, bb)
+		if prod.Sign() < 0 {
+			prod.Neg(prod)
+		}
+		return float64(new(big.Int).Div(prod, g).Int64()), nil
+	}
+}
+
+// IsPrime returns the CustomFunc for $isPrime(n).
+// Returns true if n is a prime number (n >= 2).
+func IsPrime() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$isPrime: requires 1 argument")
+		}
+		n, ok := extutil.ToInt(args[0])
+		if !ok {
+			return nil, fmt.Errorf("$isPrime: argument must be an integer")
+		}
+		if n < 2 {
+			return false, nil
+		}
+		if n == 2 {
+			return true, nil
+		}
+		if n%2 == 0 {
+			return false, nil
+		}
+		for i := 3; i*i <= n; i += 2 {
+			if n%i == 0 {
+				return false, nil
+			}
+		}
+		return true, nil
+	}
+}
+
+// Factorial returns the CustomFunc for $factorial(n).
+// Returns n! for non-negative integers up to 20.
+func Factorial() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$factorial: requires 1 argument")
+		}
+		n, ok := extutil.ToInt(args[0])
+		if !ok || n < 0 {
+			return nil, fmt.Errorf("$factorial: argument must be a non-negative integer")
+		}
+		if n > 20 {
+			return nil, fmt.Errorf("$factorial: argument too large (max 20)")
+		}
+		result := 1
+		for i := 2; i <= n; i++ {
+			result *= i
+		}
+		return float64(result), nil
+	}
+}
+
+// toFloatSlice converts an array argument to []float64.
+func toFloatSlice(fn string, v any) ([]float64, error) {
+	arr, ok := v.([]any)
+	if !ok {
+		return nil, fmt.Errorf("%s: argument must be an array", fn)
+	}
+	result := make([]float64, len(arr))
+	for i, x := range arr {
+		n, err := extutil.ToFloat(x)
+		if err != nil {
+			return nil, fmt.Errorf("%s: element %d: %w", fn, i, err)
+		}
+		result[i] = n
+	}
+	return result, nil
 }
 
 // mathFunc1 creates a CustomFunc wrapping a single-argument math function.

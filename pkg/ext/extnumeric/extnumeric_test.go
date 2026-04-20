@@ -367,3 +367,342 @@ func TestMathFunc1Errors(t *testing.T) {
 		t.Error("sin: expected error for non-numeric")
 	}
 }
+
+func TestProduct(t *testing.T) {
+	fn := extnumeric.Product()
+	cases := []struct {
+		arr  []any
+		want float64
+	}{
+		{[]any{float64(2), float64(3), float64(4)}, 24},
+		{[]any{float64(1)}, 1},
+		{[]any{}, 1},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{c.arr}, nil)
+		if err != nil {
+			t.Errorf("product %v: unexpected error: %v", c.arr, err)
+		}
+		if got != c.want {
+			t.Errorf("product %v: got %v, want %v", c.arr, got, c.want)
+		}
+	}
+}
+
+func TestProductErrors(t *testing.T) {
+	fn := extnumeric.Product()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("product: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array"}, nil); err == nil {
+		t.Error("product: expected error for non-array")
+	}
+	if _, err := fn([]any{[]any{"bad"}}, nil); err == nil {
+		t.Error("product: expected error for non-numeric element")
+	}
+}
+
+func TestCumSum(t *testing.T) {
+	fn := extnumeric.CumSum()
+	got, err := fn([]any{[]any{float64(1), float64(2), float64(3)}}, nil)
+	if err != nil {
+		t.Errorf("cumSum: unexpected error: %v", err)
+	}
+	want := []any{float64(1), float64(3), float64(6)}
+	arr := got.([]any)
+	for i, w := range want {
+		if arr[i] != w {
+			t.Errorf("cumSum[%d]: got %v, want %v", i, arr[i], w)
+		}
+	}
+}
+
+func TestCumSumErrors(t *testing.T) {
+	fn := extnumeric.CumSum()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("cumSum: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array"}, nil); err == nil {
+		t.Error("cumSum: expected error for non-array")
+	}
+}
+
+func TestInRange(t *testing.T) {
+	fn := extnumeric.InRange()
+	cases := []struct {
+		args []any
+		want bool
+	}{
+		{[]any{float64(5), float64(1), float64(10)}, true},
+		{[]any{float64(0), float64(1), float64(10)}, false},
+		{[]any{float64(10), float64(1), float64(10)}, true},
+		{[]any{float64(11), float64(1), float64(10)}, false},
+	}
+	for _, c := range cases {
+		got, err := fn(c.args, nil)
+		if err != nil {
+			t.Errorf("inRange %v: unexpected error: %v", c.args, err)
+		}
+		if got != c.want {
+			t.Errorf("inRange %v: got %v, want %v", c.args, got, c.want)
+		}
+	}
+}
+
+func TestInRangeErrors(t *testing.T) {
+	fn := extnumeric.InRange()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("inRange: expected error for 0 args")
+	}
+	if _, err := fn([]any{"bad", float64(1), float64(10)}, nil); err == nil {
+		t.Error("inRange: expected error for non-numeric n")
+	}
+	if _, err := fn([]any{float64(5), "bad", float64(10)}, nil); err == nil {
+		t.Error("inRange: expected error for non-numeric min")
+	}
+	if _, err := fn([]any{float64(5), float64(1), "bad"}, nil); err == nil {
+		t.Error("inRange: expected error for non-numeric max")
+	}
+}
+
+func TestRoundTo(t *testing.T) {
+	fn := extnumeric.RoundTo()
+	cases := []struct {
+		n, places float64
+		want      float64
+	}{
+		{3.14159, 2, 3.14},
+		{2.555, 2, 2.56},
+		{100.0, 0, 100.0},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{c.n, c.places}, nil)
+		if err != nil {
+			t.Errorf("roundTo(%v,%v): unexpected error: %v", c.n, c.places, err)
+		}
+		if got != c.want {
+			t.Errorf("roundTo(%v,%v): got %v, want %v", c.n, c.places, got, c.want)
+		}
+	}
+}
+
+func TestRoundToErrors(t *testing.T) {
+	fn := extnumeric.RoundTo()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("roundTo: expected error for 0 args")
+	}
+	if _, err := fn([]any{"bad", float64(2)}, nil); err == nil {
+		t.Error("roundTo: expected error for non-numeric n")
+	}
+	if _, err := fn([]any{float64(1.5), "bad"}, nil); err == nil {
+		t.Error("roundTo: expected error for non-integer places")
+	}
+}
+
+func TestNormalize(t *testing.T) {
+	fn := extnumeric.Normalize()
+	got, err := fn([]any{[]any{float64(0), float64(5), float64(10)}}, nil)
+	if err != nil {
+		t.Errorf("normalize: unexpected error: %v", err)
+	}
+	arr := got.([]any)
+	want := []float64{0, 0.5, 1}
+	for i, w := range want {
+		if arr[i] != w {
+			t.Errorf("normalize[%d]: got %v, want %v", i, arr[i], w)
+		}
+	}
+	// all same value → all 0
+	got2, _ := fn([]any{[]any{float64(5), float64(5)}}, nil)
+	arr2 := got2.([]any)
+	for _, v := range arr2 {
+		if v != 0.0 {
+			t.Errorf("normalize same values: got %v, want 0", v)
+		}
+	}
+	// empty array
+	got3, _ := fn([]any{[]any{}}, nil)
+	arr3 := got3.([]any)
+	if len(arr3) != 0 {
+		t.Errorf("normalize empty: got %v", arr3)
+	}
+}
+
+func TestNormalizeErrors(t *testing.T) {
+	fn := extnumeric.Normalize()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("normalize: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-array"}, nil); err == nil {
+		t.Error("normalize: expected error for non-array")
+	}
+}
+
+func TestInterpolate(t *testing.T) {
+	fn := extnumeric.Interpolate()
+	cases := []struct {
+		a, b, t, want float64
+	}{
+		{0, 10, 0.5, 5},
+		{0, 10, 0, 0},
+		{0, 10, 1, 10},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{c.a, c.b, c.t}, nil)
+		if err != nil {
+			t.Errorf("interpolate: unexpected error: %v", err)
+		}
+		if got != c.want {
+			t.Errorf("interpolate(%v,%v,%v): got %v, want %v", c.a, c.b, c.t, got, c.want)
+		}
+	}
+}
+
+func TestInterpolateErrors(t *testing.T) {
+	fn := extnumeric.Interpolate()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("interpolate: expected error for 0 args")
+	}
+	if _, err := fn([]any{"bad", float64(10), float64(0.5)}, nil); err == nil {
+		t.Error("interpolate: expected error for non-numeric a")
+	}
+	if _, err := fn([]any{float64(0), "bad", float64(0.5)}, nil); err == nil {
+		t.Error("interpolate: expected error for non-numeric b")
+	}
+	if _, err := fn([]any{float64(0), float64(10), "bad"}, nil); err == nil {
+		t.Error("interpolate: expected error for non-numeric t")
+	}
+}
+
+func TestGCD(t *testing.T) {
+	fn := extnumeric.GCD()
+	cases := []struct {
+		a, b int
+		want float64
+	}{
+		{12, 8, 4},
+		{7, 3, 1},
+		{15, 25, 5},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{float64(c.a), float64(c.b)}, nil)
+		if err != nil {
+			t.Errorf("gcd(%v,%v): unexpected error: %v", c.a, c.b, err)
+		}
+		if got != c.want {
+			t.Errorf("gcd(%v,%v): got %v, want %v", c.a, c.b, got, c.want)
+		}
+	}
+}
+
+func TestGCDErrors(t *testing.T) {
+	fn := extnumeric.GCD()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("gcd: expected error for 0 args")
+	}
+	if _, err := fn([]any{"bad", float64(3)}, nil); err == nil {
+		t.Error("gcd: expected error for non-integer a")
+	}
+	if _, err := fn([]any{float64(3), "bad"}, nil); err == nil {
+		t.Error("gcd: expected error for non-integer b")
+	}
+}
+
+func TestLCM(t *testing.T) {
+	fn := extnumeric.LCM()
+	cases := []struct {
+		a, b int
+		want float64
+	}{
+		{4, 6, 12},
+		{3, 7, 21},
+		{0, 5, 0},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{float64(c.a), float64(c.b)}, nil)
+		if err != nil {
+			t.Errorf("lcm(%v,%v): unexpected error: %v", c.a, c.b, err)
+		}
+		if got != c.want {
+			t.Errorf("lcm(%v,%v): got %v, want %v", c.a, c.b, got, c.want)
+		}
+	}
+}
+
+func TestLCMErrors(t *testing.T) {
+	fn := extnumeric.LCM()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("lcm: expected error for 0 args")
+	}
+	if _, err := fn([]any{"bad", float64(6)}, nil); err == nil {
+		t.Error("lcm: expected error for non-integer a")
+	}
+	if _, err := fn([]any{float64(4), "bad"}, nil); err == nil {
+		t.Error("lcm: expected error for non-integer b")
+	}
+}
+
+func TestIsPrime(t *testing.T) {
+	fn := extnumeric.IsPrime()
+	cases := []struct {
+		n    int
+		want bool
+	}{
+		{2, true}, {3, true}, {4, false}, {7, true},
+		{1, false}, {0, false}, {-1, false}, {17, true},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{float64(c.n)}, nil)
+		if err != nil {
+			t.Errorf("isPrime(%v): unexpected error: %v", c.n, err)
+		}
+		if got != c.want {
+			t.Errorf("isPrime(%v): got %v, want %v", c.n, got, c.want)
+		}
+	}
+}
+
+func TestIsPrimeErrors(t *testing.T) {
+	fn := extnumeric.IsPrime()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("isPrime: expected error for 0 args")
+	}
+	if _, err := fn([]any{"bad"}, nil); err == nil {
+		t.Error("isPrime: expected error for non-integer")
+	}
+}
+
+func TestFactorial(t *testing.T) {
+	fn := extnumeric.Factorial()
+	cases := []struct {
+		n    int
+		want float64
+	}{
+		{0, 1}, {1, 1}, {5, 120}, {10, 3628800}, {20, 2432902008176640000},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{float64(c.n)}, nil)
+		if err != nil {
+			t.Errorf("factorial(%v): unexpected error: %v", c.n, err)
+		}
+		if got != c.want {
+			t.Errorf("factorial(%v): got %v, want %v", c.n, got, c.want)
+		}
+	}
+}
+
+func TestFactorialErrors(t *testing.T) {
+	fn := extnumeric.Factorial()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("factorial: expected error for 0 args")
+	}
+	if _, err := fn([]any{"bad"}, nil); err == nil {
+		t.Error("factorial: expected error for non-integer")
+	}
+	if _, err := fn([]any{float64(-1)}, nil); err == nil {
+		t.Error("factorial: expected error for negative")
+	}
+	if _, err := fn([]any{float64(21)}, nil); err == nil {
+		t.Error("factorial: expected error for too large")
+	}
+}
