@@ -16,6 +16,7 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnumeric"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extobject"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extpath"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extschema"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extsemver"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extstring"
 	"github.com/sandrolain/gnata-ext/pkg/ext/exttext"
@@ -66,6 +67,7 @@ func (b *EnvBuilder) WithURIFuncs() *EnvBuilder      { return b.merge(exturi.All
 func (b *EnvBuilder) WithNumericFuncs() *EnvBuilder  { return b.merge(extnumeric.All()) }
 func (b *EnvBuilder) WithObjectFuncs() *EnvBuilder   { return b.merge(extobject.All()) }
 func (b *EnvBuilder) WithPathFuncs() *EnvBuilder     { return b.merge(extpath.All()) }
+func (b *EnvBuilder) WithSchemaFuncs() *EnvBuilder   { return b.merge(extschema.All()) }
 func (b *EnvBuilder) WithSemverFuncs() *EnvBuilder   { return b.merge(extsemver.All()) }
 func (b *EnvBuilder) WithStringFuncs() *EnvBuilder   { return b.merge(extstring.All()) }
 func (b *EnvBuilder) WithTextFuncs() *EnvBuilder     { return b.merge(exttext.All()) }

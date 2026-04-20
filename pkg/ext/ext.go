@@ -24,6 +24,7 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnumeric"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extobject"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extpath"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extschema"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extsemver"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extstring"
 	"github.com/sandrolain/gnata-ext/pkg/ext/exttext"
@@ -49,6 +50,7 @@ func AllFuncs() map[string]gnata.CustomFunc {
 		extnumeric.All(),
 		extobject.All(),
 		extpath.All(),
+		extschema.All(),
 		extsemver.All(),
 		extstring.All(),
 		exttext.All(),

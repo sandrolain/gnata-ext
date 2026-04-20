@@ -121,6 +121,10 @@ var catalog = []FuncMeta{
 	{Name: "has", Package: "extpath", Signature: "(obj: object, path: string) → boolean", Description: "Returns true if path exists and is non-null."},
 	{Name: "flattenObj", Package: "extpath", Signature: "(obj: object [, sep: string]) → object", Description: "Flattens a nested object using sep as key separator."},
 	{Name: "expandObj", Package: "extpath", Signature: "(obj: object [, sep: string]) → object", Description: "Expands a flat object with compound keys to nested."},
+	// extschema
+	{Name: "validateSchema", Package: "extschema", Signature: "(data: any, schema: object) → object", Description: "Validates data against a JSON Schema. Returns {valid, errors}."},
+	{Name: "isValid", Package: "extschema", Signature: "(data: any, schema: object) → boolean", Description: "Returns true if data is valid according to the JSON Schema."},
+	{Name: "schemaErrors", Package: "extschema", Signature: "(data: any, schema: object) → array", Description: "Returns an array of validation error strings."},
 	// extsemver
 	{Name: "semverParse", Package: "extsemver", Signature: "(v: string) → object", Description: "Parses a semantic version string into an object."},
 	{Name: "semverCompare", Package: "extsemver", Signature: "(a: string, b: string) → number", Description: "Compares two version strings: -1, 0, or 1."},
