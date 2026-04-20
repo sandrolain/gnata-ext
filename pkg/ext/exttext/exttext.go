@@ -27,14 +27,14 @@ import (
 // All returns a map of all exttext functions.
 func All() map[string]gnata.CustomFunc {
 	return map[string]gnata.CustomFunc{
-		"wordCount":          WordCount(),
-		"charCount":          CharCount(),
-		"sentenceCount":      SentenceCount(),
-		"readingTime":        ReadingTime(),
-		"wordFrequency":      WordFrequency(),
-		"ngrams":             Ngrams(),
-		"excerpt":            Excerpt(),
-		"stripHTML":          StripHTML(),
+		"wordCount":           WordCount(),
+		"charCount":           CharCount(),
+		"sentenceCount":       SentenceCount(),
+		"readingTime":         ReadingTime(),
+		"wordFrequency":       WordFrequency(),
+		"ngrams":              Ngrams(),
+		"excerpt":             Excerpt(),
+		"stripHTML":           StripHTML(),
 		"normalizeWhitespace": NormalizeWhitespace(),
 	}
 }

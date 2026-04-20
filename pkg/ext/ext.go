@@ -20,16 +20,16 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extjson"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extlogic"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnet"
-	"github.com/sandrolain/gnata-ext/pkg/ext/extregex"
-	"github.com/sandrolain/gnata-ext/pkg/ext/exturi"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extnumeric"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extobject"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extpath"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extregex"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extschema"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extsemver"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extstring"
 	"github.com/sandrolain/gnata-ext/pkg/ext/exttext"
 	"github.com/sandrolain/gnata-ext/pkg/ext/exttypes"
+	"github.com/sandrolain/gnata-ext/pkg/ext/exturi"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extvalidate"
 )
 
