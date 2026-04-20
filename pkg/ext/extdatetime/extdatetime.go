@@ -10,6 +10,16 @@
 //   - $dateComponents(timestamp)           – map of year/month/day/… components
 //   - $dateStartOf(timestamp, unit)        – start of the given time unit
 //   - $dateEndOf(timestamp, unit)          – end of the given time unit
+//   - $dateFormat(timestamp, layout)       – format timestamp using Go layout
+//   - $dateParse(str, layout)              – parse string to timestamp
+//   - $dateIsBefore(t1, t2)               – true if t1 < t2
+//   - $dateIsAfter(t1, t2)               – true if t1 > t2
+//   - $dateIsBetween(t, start, end)        – true if start <= t <= end
+//   - $dateWeek(timestamp)                – ISO week number
+//   - $dateQuarter(timestamp)             – quarter number (1-4)
+//   - $dateDayOfYear(timestamp)           – day of year (1-366)
+//   - $isLeapYear(timestamp)              – true if the year is a leap year
+//   - $daysInMonth(timestamp)             – number of days in the timestamp's month
 package extdatetime
 
 import (
@@ -29,6 +39,16 @@ func All() map[string]gnata.CustomFunc {
 		"dateComponents": DateComponents(),
 		"dateStartOf":    DateStartOf(),
 		"dateEndOf":      DateEndOf(),
+		"dateFormat":     DateFormat(),
+		"dateParse":      DateParse(),
+		"dateIsBefore":   DateIsBefore(),
+		"dateIsAfter":    DateIsAfter(),
+		"dateIsBetween":  DateIsBetween(),
+		"dateWeek":       DateWeek(),
+		"dateQuarter":    DateQuarter(),
+		"dateDayOfYear":  DateDayOfYear(),
+		"isLeapYear":     IsLeapYear(),
+		"daysInMonthOf":  DaysInMonthOf(),
 	}
 }
 
@@ -256,4 +276,181 @@ func dateDiffYMD(from, to time.Time) (years, months, days int) {
 // daysInMonth returns the number of days in the given month.
 func daysInMonth(year int, month time.Month) int {
 	return time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
+}
+
+// DateFormat returns a CustomFunc for $dateFormat(timestamp, layout).
+// layout uses Go time layout string (e.g. "2006-01-02").
+func DateFormat() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$dateFormat: requires 2 arguments (timestamp, layout)")
+		}
+		ms, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$dateFormat: timestamp: %w", err)
+		}
+		layout, ok := args[1].(string)
+		if !ok {
+			return nil, fmt.Errorf("$dateFormat: layout must be a string")
+		}
+		return msToTime(ms).Format(layout), nil
+	}
+}
+
+// DateParse returns a CustomFunc for $dateParse(str, layout).
+// Returns Unix milliseconds as float64.
+func DateParse() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$dateParse: requires 2 arguments (str, layout)")
+		}
+		str, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$dateParse: str must be a string")
+		}
+		layout, ok := args[1].(string)
+		if !ok {
+			return nil, fmt.Errorf("$dateParse: layout must be a string")
+		}
+		t, err := time.Parse(layout, str)
+		if err != nil {
+			return nil, fmt.Errorf("$dateParse: %w", err)
+		}
+		return timeToMs(t), nil
+	}
+}
+
+// DateIsBefore returns a CustomFunc for $dateIsBefore(t1, t2).
+func DateIsBefore() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$dateIsBefore: requires 2 arguments")
+		}
+		t1, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$dateIsBefore: t1: %w", err)
+		}
+		t2, err := extutil.ToFloat(args[1])
+		if err != nil {
+			return nil, fmt.Errorf("$dateIsBefore: t2: %w", err)
+		}
+		return t1 < t2, nil
+	}
+}
+
+// DateIsAfter returns a CustomFunc for $dateIsAfter(t1, t2).
+func DateIsAfter() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$dateIsAfter: requires 2 arguments")
+		}
+		t1, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$dateIsAfter: t1: %w", err)
+		}
+		t2, err := extutil.ToFloat(args[1])
+		if err != nil {
+			return nil, fmt.Errorf("$dateIsAfter: t2: %w", err)
+		}
+		return t1 > t2, nil
+	}
+}
+
+// DateIsBetween returns a CustomFunc for $dateIsBetween(t, start, end).
+func DateIsBetween() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 3 {
+			return nil, fmt.Errorf("$dateIsBetween: requires 3 arguments (t, start, end)")
+		}
+		t, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$dateIsBetween: t: %w", err)
+		}
+		start, err := extutil.ToFloat(args[1])
+		if err != nil {
+			return nil, fmt.Errorf("$dateIsBetween: start: %w", err)
+		}
+		end, err := extutil.ToFloat(args[2])
+		if err != nil {
+			return nil, fmt.Errorf("$dateIsBetween: end: %w", err)
+		}
+		return t >= start && t <= end, nil
+	}
+}
+
+// DateWeek returns a CustomFunc for $dateWeek(timestamp).
+// Returns ISO week number (1-53).
+func DateWeek() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$dateWeek: requires 1 argument")
+		}
+		ms, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$dateWeek: timestamp: %w", err)
+		}
+		_, week := msToTime(ms).ISOWeek()
+		return float64(week), nil
+	}
+}
+
+// DateQuarter returns a CustomFunc for $dateQuarter(timestamp).
+// Returns quarter 1-4.
+func DateQuarter() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$dateQuarter: requires 1 argument")
+		}
+		ms, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$dateQuarter: timestamp: %w", err)
+		}
+		month := int(msToTime(ms).Month())
+		return float64((month-1)/3 + 1), nil
+	}
+}
+
+// DateDayOfYear returns a CustomFunc for $dateDayOfYear(timestamp).
+func DateDayOfYear() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$dateDayOfYear: requires 1 argument")
+		}
+		ms, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$dateDayOfYear: timestamp: %w", err)
+		}
+		return float64(msToTime(ms).YearDay()), nil
+	}
+}
+
+// IsLeapYear returns a CustomFunc for $isLeapYear(timestamp).
+func IsLeapYear() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$isLeapYear: requires 1 argument")
+		}
+		ms, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$isLeapYear: timestamp: %w", err)
+		}
+		year := msToTime(ms).Year()
+		leap := (year%4 == 0 && year%100 != 0) || year%400 == 0
+		return leap, nil
+	}
+}
+
+// DaysInMonthOf returns a CustomFunc for $daysInMonthOf(timestamp).
+func DaysInMonthOf() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$daysInMonthOf: requires 1 argument")
+		}
+		ms, err := extutil.ToFloat(args[0])
+		if err != nil {
+			return nil, fmt.Errorf("$daysInMonthOf: timestamp: %w", err)
+		}
+		t := msToTime(ms)
+		return float64(daysInMonth(t.Year(), t.Month())), nil
+	}
 }
