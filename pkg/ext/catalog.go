@@ -37,6 +37,14 @@ var catalog = []FuncMeta{
 	{Name: "dateComponents", Package: "extdatetime", Signature: "(timestamp: number) → object", Description: "UTC components of a Unix-ms timestamp."},
 	{Name: "dateStartOf", Package: "extdatetime", Signature: "(timestamp: number, unit: string) → number", Description: "Start of the given period."},
 	{Name: "dateEndOf", Package: "extdatetime", Signature: "(timestamp: number, unit: string) → number", Description: "End (last ms) of the given period."},
+	// extdiff
+	{Name: "diff", Package: "extdiff", Signature: "(a: object, b: object) → object", Description: "Structural diff returning {added, removed, changed}."},
+	{Name: "patch", Package: "extdiff", Signature: "(obj: object, diff: object) → object", Description: "Applies a diff to reconstruct the second object."},
+	{Name: "changed", Package: "extdiff", Signature: "(a: object, b: object, key: string) → boolean", Description: "Returns true if the given key changed between a and b."},
+	{Name: "addedKeys", Package: "extdiff", Signature: "(a: object, b: object) → array", Description: "Keys present in b but not in a."},
+	{Name: "removedKeys", Package: "extdiff", Signature: "(a: object, b: object) → array", Description: "Keys present in a but not in b."},
+	{Name: "arrayDiff", Package: "extdiff", Signature: "(a: array, b: array) → object", Description: "Returns {added, removed} between two arrays."},
+	{Name: "deepEqual", Package: "extdiff", Signature: "(a: any, b: any) → boolean", Description: "Recursive deep equality comparison."},
 	// extformat
 	{Name: "csv", Package: "extformat", Signature: "(text: string) → array", Description: "Parses a CSV string into an array of objects."},
 	{Name: "toCSV", Package: "extformat", Signature: "(array) → string", Description: "Serialises an array of objects to CSV text."},

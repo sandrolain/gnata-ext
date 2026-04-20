@@ -13,6 +13,7 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extarray"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extcrypto"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extdatetime"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extdiff"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extformat"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extgeo"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extjson"
@@ -35,6 +36,7 @@ func AllFuncs() map[string]gnata.CustomFunc {
 		extarray.All(),
 		extcrypto.All(),
 		extdatetime.All(),
+		extdiff.All(),
 		extformat.All(),
 		extgeo.All(),
 		extjson.All(),

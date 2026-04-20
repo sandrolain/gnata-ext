@@ -5,6 +5,7 @@ import (
 	"github.com/sandrolain/gnata-ext/pkg/ext/extarray"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extcrypto"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extdatetime"
+	"github.com/sandrolain/gnata-ext/pkg/ext/extdiff"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extformat"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extgeo"
 	"github.com/sandrolain/gnata-ext/pkg/ext/extjson"
@@ -52,6 +53,7 @@ func (b *EnvBuilder) WithAllFuncs() *EnvBuilder      { return b.merge(AllFuncs()
 func (b *EnvBuilder) WithArrayFuncs() *EnvBuilder    { return b.merge(extarray.All()) }
 func (b *EnvBuilder) WithCryptoFuncs() *EnvBuilder   { return b.merge(extcrypto.All()) }
 func (b *EnvBuilder) WithDatetimeFuncs() *EnvBuilder { return b.merge(extdatetime.All()) }
+func (b *EnvBuilder) WithDiffFuncs() *EnvBuilder     { return b.merge(extdiff.All()) }
 func (b *EnvBuilder) WithFormatFuncs() *EnvBuilder   { return b.merge(extformat.All()) }
 func (b *EnvBuilder) WithGeoFuncs() *EnvBuilder      { return b.merge(extgeo.All()) }
 func (b *EnvBuilder) WithJSONFuncs() *EnvBuilder     { return b.merge(extjson.All()) }
