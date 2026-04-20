@@ -40,36 +40,36 @@ import (
 )
 
 var (
-	splitWordsRe  = regexp.MustCompile(`[_\-\s]+|([a-z])([A-Z])`)
-	templateRe    = regexp.MustCompile(`\{\{(\w+)\}\}`)
+	splitWordsRe    = regexp.MustCompile(`[_\-\s]+|([a-z])([A-Z])`)
+	templateRe      = regexp.MustCompile(`\{\{(\w+)\}\}`)
 	slugifyNonAlNum = regexp.MustCompile(`[^a-z0-9]+`)
 )
 
 // All returns a map of all extended string functions.
 func All() map[string]gnata.CustomFunc {
 	return map[string]gnata.CustomFunc{
-		"startsWith":         StartsWith(),
-		"endsWith":           EndsWith(),
-		"indexOf":            IndexOf(),
-		"lastIndexOf":        LastIndexOf(),
-		"capitalize":         Capitalize(),
-		"titleCase":          TitleCase(),
-		"camelCase":          CamelCase(),
-		"snakeCase":          SnakeCase(),
-		"kebabCase":          KebabCase(),
-		"repeat":             Repeat(),
-		"words":              Words(),
-		"template":           Template(),
-		"padStart":           PadStart(),
-		"padEnd":             PadEnd(),
-		"truncate":           Truncate(),
-		"slugify":            Slugify(),
-		"countOccurrences":   CountOccurrences(),
-		"initials":           Initials(),
-		"escapeHTML":         EscapeHTML(),
-		"unescapeHTML":       UnescapeHTML(),
-		"reverseWords":       ReverseWords(),
-		"levenshtein":        Levenshtein(),
+		"startsWith":          StartsWith(),
+		"endsWith":            EndsWith(),
+		"indexOf":             IndexOf(),
+		"lastIndexOf":         LastIndexOf(),
+		"capitalize":          Capitalize(),
+		"titleCase":           TitleCase(),
+		"camelCase":           CamelCase(),
+		"snakeCase":           SnakeCase(),
+		"kebabCase":           KebabCase(),
+		"repeat":              Repeat(),
+		"words":               Words(),
+		"template":            Template(),
+		"padStart":            PadStart(),
+		"padEnd":              PadEnd(),
+		"truncate":            Truncate(),
+		"slugify":             Slugify(),
+		"countOccurrences":    CountOccurrences(),
+		"initials":            Initials(),
+		"escapeHTML":          EscapeHTML(),
+		"unescapeHTML":        UnescapeHTML(),
+		"reverseWords":        ReverseWords(),
+		"levenshtein":         Levenshtein(),
 		"longestCommonPrefix": LongestCommonPrefix(),
 	}
 }

@@ -144,6 +144,11 @@ var catalog = []FuncMeta{
 	{Name: "invert", Package: "extobject", Signature: "(object) → object", Description: "Swaps keys and values."},
 	{Name: "size", Package: "extobject", Signature: "(object) → number", Description: "Returns the number of own keys."},
 	{Name: "rename", Package: "extobject", Signature: "(object, oldKey: string, newKey: string) → object", Description: "Renames a key."},
+	{Name: "clean", Package: "extobject", Signature: "(object) → object", Description: "Recursively removes keys with nil values."},
+	{Name: "defaults", Package: "extobject", Signature: "(object, defs: object) → object", Description: "Fills in missing keys from defs without overwriting existing ones."},
+	{Name: "transform", Package: "extobject", Signature: "(object, keyMap: object) → object", Description: "Renames multiple keys according to a {oldKey: newKey} mapping."},
+	{Name: "filterKeys", Package: "extobject", Signature: "(object, pattern: string) → object", Description: "Keeps only keys matching the regex pattern."},
+	{Name: "groupByValue", Package: "extobject", Signature: "(object) → object", Description: "Groups keys that share the same value: {a:1,b:1} → {\"1\":[\"a\",\"b\"]}."},
 	// extpath
 	{Name: "get", Package: "extpath", Signature: "(obj: object, path: string [, default: any]) → any", Description: "Reads a nested value by dot-path."},
 	{Name: "set", Package: "extpath", Signature: "(obj: object, path: string, value: any) → object", Description: "Returns a new object with value at path."},
