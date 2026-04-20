@@ -151,3 +151,113 @@ $window([1, 2, 3, 4], 2, 2)     /* → [[1, 2], [3, 4]] */
 ```
 
 ---
+
+### `$compact(array)`
+
+Returns a new array with all falsy values removed. Falsy values are: `null`, `false`, `0`, and `""`.
+
+```jsonata
+$compact([1, null, 2, false, 0, "", 3])   /* → [1, 2, 3] */
+```
+
+---
+
+### `$groupByKey(array, key)`
+
+Groups an array of objects by the value of *key*. Returns an object where each key is a distinct value of *key* and the value is an array of matching objects.
+
+```jsonata
+$groupByKey([{"type":"a","v":1},{"type":"b","v":2},{"type":"a","v":3}], "type")
+/* → {"a":[{"type":"a","v":1},{"type":"a","v":3}], "b":[{"type":"b","v":2}]} */
+```
+
+---
+
+### `$sortBy(array, key)`
+
+Returns a new array sorted in ascending order by the value of *key*. Uses a stable sort. Numeric values are compared numerically; all others are compared as strings.
+
+> **JSONata native alternative:** `$sort(array, function($l, $r){ $l.key > $r.key })` — more flexible but requires a lambda.
+
+```jsonata
+$sortBy([{"name":"c"},{"name":"a"},{"name":"b"}], "name")
+/* → [{"name":"a"},{"name":"b"},{"name":"c"}] */
+```
+
+---
+
+### `$uniqueBy(array, key)`
+
+Returns an array with duplicates removed, keeping the first occurrence for each value of *key*.
+
+```jsonata
+$uniqueBy([{"id":1,"v":"a"},{"id":2,"v":"b"},{"id":1,"v":"c"}], "id")
+/* → [{"id":1,"v":"a"},{"id":2,"v":"b"}] */
+```
+
+---
+
+### `$sumByKey(array, key)`
+
+Returns the sum of the numeric values at *key* across all objects in *array*.
+
+```jsonata
+$sumByKey([{"price":10},{"price":20},{"price":5}], "price")   /* → 35 */
+```
+
+---
+
+### `$countByKey(array, key)`
+
+Returns an object counting how many times each distinct value of *key* appears.
+
+```jsonata
+$countByKey([{"type":"a"},{"type":"b"},{"type":"a"}], "type")
+/* → {"a": 2, "b": 1} */
+```
+
+---
+
+### `$rotate(array, n)`
+
+Rotates *array* right by *n* positions. A negative *n* rotates left.
+
+```jsonata
+$rotate([1, 2, 3, 4, 5], 2)    /* → [4, 5, 1, 2, 3] */
+$rotate([1, 2, 3, 4, 5], -1)   /* → [2, 3, 4, 5, 1] */
+```
+
+---
+
+### `$indexof(array, value)`
+
+Returns the first index of *value* in *array* using deep equality, or `−1` if not found.
+
+```jsonata
+$indexof([1, 2, 3], 2)                         /* → 1 */
+$indexof([{"a":1},{"a":2}], {"a":2})           /* → 1 */
+$indexof([1, 2, 3], 99)                        /* → -1 */
+```
+
+---
+
+### `$transpose(matrix)`
+
+Transposes a 2-D array (matrix). The *i*-th row of the result contains the *i*-th element of each original row.
+
+```jsonata
+$transpose([[1, 2, 3], [4, 5, 6]])
+/* → [[1, 4], [2, 5], [3, 6]] */
+```
+
+---
+
+### `$adjacentPairs(array)`
+
+Returns an array of consecutive `[a, b]` pairs from *array*. An array of length *n* produces *n − 1* pairs.
+
+```jsonata
+$adjacentPairs([1, 2, 3, 4])   /* → [[1, 2], [2, 3], [3, 4]] */
+```
+
+---

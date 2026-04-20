@@ -145,3 +145,114 @@ $mode([1, 1, 2, 2, 3])     /* → [1, 2] */
 ```
 
 ---
+
+### `$product(array)`
+
+Returns the arithmetic product of all elements in *array*.
+
+```jsonata
+$product([1, 2, 3, 4])   /* → 24 */
+$product([2, 0.5])        /* → 1 */
+```
+
+---
+
+### `$cumSum(array)`
+
+Returns an array of cumulative sums.
+
+```jsonata
+$cumSum([1, 2, 3, 4])   /* → [1, 3, 6, 10] */
+```
+
+---
+
+### `$inRange(n, min, max)`
+
+Returns `true` if *min* ≤ *n* ≤ *max*.
+
+```jsonata
+$inRange(5, 1, 10)    /* → true */
+$inRange(11, 1, 10)   /* → false */
+```
+
+---
+
+### `$roundTo(n, precision)`
+
+Rounds *n* to *precision* decimal places.
+
+> **JSONata native equivalent:** `$round(n, precision)` — identical semantics. Prefer the built-in.
+
+```jsonata
+$roundTo(3.14159, 2)   /* → 3.14 */
+$roundTo(123.5, -1)    /* → 120 */
+```
+
+---
+
+### `$normalize(array)`
+
+Applies min-max normalisation, scaling all values to the range [0, 1].
+
+```jsonata
+$normalize([1, 2, 3, 4, 5])   /* → [0, 0.25, 0.5, 0.75, 1] */
+```
+
+---
+
+### `$interpolate(start, end, t)`
+
+Returns the linearly interpolated value between *start* and *end* at position *t* (0 = start, 1 = end).
+
+```jsonata
+$interpolate(0, 100, 0.5)   /* → 50 */
+$interpolate(10, 20, 0.25)  /* → 12.5 */
+```
+
+---
+
+### `$gcd(a, b)`
+
+Returns the greatest common divisor of integers *a* and *b*.
+
+```jsonata
+$gcd(12, 8)   /* → 4 */
+$gcd(7, 5)    /* → 1 */
+```
+
+---
+
+### `$lcm(a, b)`
+
+Returns the least common multiple of integers *a* and *b*.
+
+```jsonata
+$lcm(4, 6)    /* → 12 */
+$lcm(3, 7)    /* → 21 */
+```
+
+---
+
+### `$isPrime(n)`
+
+Returns `true` if *n* is a prime number. *n* must be a positive integer.
+
+```jsonata
+$isPrime(7)    /* → true */
+$isPrime(8)    /* → false */
+$isPrime(1)    /* → false */
+```
+
+---
+
+### `$factorial(n)`
+
+Returns *n*! as a float64. *n* must be a non-negative integer ≤ 20 (larger values overflow float64 exactly).
+
+```jsonata
+$factorial(5)    /* → 120 */
+$factorial(0)    /* → 1 */
+```
+
+---

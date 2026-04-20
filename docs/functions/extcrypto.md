@@ -40,3 +40,37 @@ $hmac("sha256", "secret", "message")
 ```
 
 ---
+
+### `$randomBytes(n)`
+
+Returns *n* cryptographically random bytes encoded as a lowercase hexadecimal string. The result is always 2×*n* characters long.
+
+```jsonata
+$randomBytes(8)   /* → e.g. "3f9a1b2c4e5d6a7b" */
+```
+
+---
+
+### `$base64url(str)`
+
+Encodes *str* using RFC 4648 §5 URL-safe Base64 alphabet with **no padding characters**.
+
+> **Note:** This is different from `$base64encode(str)`, which uses the standard alphabet with `=` padding. The two encodings are **not interchangeable**.
+
+```jsonata
+$base64url("hello world")   /* → "aGVsbG8gd29ybGQ" */
+```
+
+---
+
+### `$unbase64url(str)`
+
+Decodes a URL-safe Base64 (no padding) string produced by `$base64url`.
+
+> **Note:** This function does not decode output from `$base64decode`; use the matching `$base64url` / `$unbase64url` pair consistently.
+
+```jsonata
+$unbase64url("aGVsbG8gd29ybGQ")   /* → "hello world" */
+```
+
+---

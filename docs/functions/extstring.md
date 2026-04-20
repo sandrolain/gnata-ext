@@ -133,3 +133,126 @@ $template("Hi {{name}}", {"name": "Bob"})   /* → "Hi Bob" */
 ```
 
 ---
+
+### `$padStart(str, width, char)`
+
+Left-pads *str* to *width* total characters using *char* (default `" "`). If *str* is already at least *width* chars, it is returned unchanged.
+
+> **JSONata native alternative:** `$pad(str, -width [, char])` — negative width left-pads in standard JSONata.
+
+```jsonata
+$padStart("5", 3, "0")   /* → "005" */
+$padStart("hi", 5)       /* → "   hi" */
+```
+
+---
+
+### `$padEnd(str, width, char)`
+
+Right-pads *str* to *width* total characters using *char* (default `" "`).
+
+> **JSONata native alternative:** `$pad(str, width [, char])` — positive width right-pads in standard JSONata.
+
+```jsonata
+$padEnd("hi", 5, ".")   /* → "hi..." */
+```
+
+---
+
+### `$truncate(str, max [, suffix])`
+
+Returns *str* truncated to at most *max* characters. When truncation occurs, *suffix* (default `"..."`) is appended and the total length stays within *max*.
+
+```jsonata
+$truncate("Hello World", 8)         /* → "Hello..." */
+$truncate("Hello World", 8, "…")    /* → "Hello W…" */
+$truncate("Hi", 10)                 /* → "Hi" */
+```
+
+---
+
+### `$slugify(str)`
+
+Converts *str* to a URL-safe lowercase slug: lowercases, replaces non-alphanumeric sequences with `-`, and strips leading/trailing dashes.
+
+```jsonata
+$slugify("Hello World!")     /* → "hello-world" */
+$slugify("  Foo  Bar  ")     /* → "foo-bar" */
+```
+
+---
+
+### `$countOccurrences(str, sub)`
+
+Returns the number of non-overlapping occurrences of *sub* in *str*.
+
+```jsonata
+$countOccurrences("abcabcabc", "abc")   /* → 3 */
+$countOccurrences("aaa", "aa")          /* → 1 */
+```
+
+---
+
+### `$initials(str)`
+
+Extracts the uppercase initial letter of each word.
+
+```jsonata
+$initials("John Doe")          /* → "JD" */
+$initials("hello world foo")   /* → "HWF" */
+```
+
+---
+
+### `$escapeHTML(str)`
+
+Replaces `&`, `<`, `>`, `"`, and `'` with their HTML entity equivalents.
+
+```jsonata
+$escapeHTML("<b>Hello & 'World'</b>")
+/* → "&lt;b&gt;Hello &amp; &#39;World&#39;&lt;/b&gt;" */
+```
+
+---
+
+### `$unescapeHTML(str)`
+
+Decodes HTML entities back to their characters.
+
+```jsonata
+$unescapeHTML("&lt;b&gt;Hello&lt;/b&gt;")   /* → "<b>Hello</b>" */
+```
+
+---
+
+### `$reverseWords(str)`
+
+Reverses the order of words in *str*.
+
+```jsonata
+$reverseWords("hello world foo")   /* → "foo world hello" */
+```
+
+---
+
+### `$levenshtein(a, b)`
+
+Returns the Levenshtein edit distance between strings *a* and *b*.
+
+```jsonata
+$levenshtein("kitten", "sitting")   /* → 3 */
+$levenshtein("abc", "abc")          /* → 0 */
+```
+
+---
+
+### `$longestCommonPrefix(array)`
+
+Returns the longest string that is a prefix of every element in *array*. Returns `""` if the array is empty or there is no common prefix.
+
+```jsonata
+$longestCommonPrefix(["flower", "flow", "flight"])   /* → "fl" */
+$longestCommonPrefix(["dog", "racecar", "car"])       /* → "" */
+```
+
+---
