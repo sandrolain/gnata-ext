@@ -221,6 +221,13 @@ var catalog = []FuncMeta{
 	{Name: "isEmpty", Package: "exttypes", Signature: "(v: any) → boolean", Description: "Returns true for null, empty string, empty array, empty object."},
 	{Name: "default", Package: "exttypes", Signature: "(v: any, d: any) → any", Description: "Returns v if non-null, else d."},
 	{Name: "identity", Package: "exttypes", Signature: "(v: any) → any", Description: "Returns v unchanged."},
+	{Name: "toArray", Package: "exttypes", Signature: "(v: any) → array", Description: "Wraps v in array if not already one; nil → []."},
+	{Name: "defined", Package: "exttypes", Signature: "(v: any) → boolean", Description: "True if v is not nil."},
+	{Name: "nullish", Package: "exttypes", Signature: "(v: any, d: any) → any", Description: "Returns v if not nil, otherwise d."},
+	{Name: "typeOf", Package: "exttypes", Signature: "(v: any) → string", Description: "Returns type name: string, number, boolean, array, object, or null."},
+	{Name: "toNumber", Package: "exttypes", Signature: "(v: any) → number", Description: "Coerces v to number."},
+	{Name: "toString", Package: "exttypes", Signature: "(v: any) → string", Description: "Coerces v to string."},
+	{Name: "toBool", Package: "exttypes", Signature: "(v: any) → boolean", Description: "Coerces v to boolean."},
 	// exttext
 	{Name: "wordCount", Package: "exttext", Signature: "(s: string) → number", Description: "Number of words in the string."},
 	{Name: "charCount", Package: "exttext", Signature: "(s: string) → number", Description: "Number of Unicode code points in the string."},
