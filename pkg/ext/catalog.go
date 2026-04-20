@@ -156,6 +156,17 @@ var catalog = []FuncMeta{
 	{Name: "repeat", Package: "extstring", Signature: "(str: string, n: number) → string", Description: "Returns str repeated n times."},
 	{Name: "words", Package: "extstring", Signature: "(str: string) → array", Description: "Splits str into words."},
 	// extstring.template intentionally omitted (duplicate with extformat.template)
+	{Name: "padStart", Package: "extstring", Signature: "(str: string, len: number [, fill: string]) → string", Description: "Left-pads str to length using fill (default space)."},
+	{Name: "padEnd", Package: "extstring", Signature: "(str: string, len: number [, fill: string]) → string", Description: "Right-pads str to length using fill (default space)."},
+	{Name: "truncate", Package: "extstring", Signature: "(str: string, len: number [, suffix: string]) → string", Description: "Truncates str to len chars, appending suffix (default '…') if truncated."},
+	{Name: "slugify", Package: "extstring", Signature: "(str: string) → string", Description: "Converts str to a URL-friendly lowercase slug."},
+	{Name: "countOccurrences", Package: "extstring", Signature: "(str: string, sub: string) → number", Description: "Counts non-overlapping occurrences of sub in str."},
+	{Name: "initials", Package: "extstring", Signature: "(str: string [, sep: string]) → string", Description: "Returns initials of each word joined by sep."},
+	{Name: "escapeHTML", Package: "extstring", Signature: "(str: string) → string", Description: "Escapes HTML special characters (&, <, >, \", ')."},
+	{Name: "unescapeHTML", Package: "extstring", Signature: "(str: string) → string", Description: "Unescapes HTML entities back to characters."},
+	{Name: "reverseWords", Package: "extstring", Signature: "(str: string) → string", Description: "Reverses the order of whitespace-separated words."},
+	{Name: "levenshtein", Package: "extstring", Signature: "(a: string, b: string) → number", Description: "Returns the Levenshtein edit distance between a and b."},
+	{Name: "longestCommonPrefix", Package: "extstring", Signature: "(strs: array) → string", Description: "Returns the longest string that is a prefix of all strings in the array."},
 	// extregex
 	{Name: "regexAll", Package: "extregex", Signature: "(str: string, pattern: string) → array", Description: "Returns all non-overlapping matches of pattern in str."},
 	{Name: "regexNamedGroups", Package: "extregex", Signature: "(str: string, pattern: string) → object", Description: "Returns named capture groups as an object."},

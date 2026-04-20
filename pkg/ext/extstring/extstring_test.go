@@ -308,3 +308,359 @@ func TestTemplateErrors(t *testing.T) {
 		t.Error("template: expected error for non-object bindings")
 	}
 }
+
+func TestPadStart(t *testing.T) {
+	fn := extstring.PadStart()
+	cases := []struct {
+		args []any
+		want any
+	}{
+		{[]any{"hi", float64(5)}, "   hi"},
+		{[]any{"hi", float64(5), "0"}, "000hi"},
+		{[]any{"hello", float64(3)}, "hello"},
+		{[]any{"hi", float64(5), "xy"}, "xyxhi"},
+	}
+	for _, c := range cases {
+		got, err := fn(c.args, nil)
+		if err != nil {
+			t.Errorf("padStart %v: unexpected error: %v", c.args, err)
+		}
+		if got != c.want {
+			t.Errorf("padStart %v: got %v, want %v", c.args, got, c.want)
+		}
+	}
+}
+
+func TestPadStartErrors(t *testing.T) {
+	fn := extstring.PadStart()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("padStart: expected error for 0 args")
+	}
+	if _, err := fn([]any{42, float64(5)}, nil); err == nil {
+		t.Error("padStart: expected error for non-string")
+	}
+	if _, err := fn([]any{"hi", "bad"}, nil); err == nil {
+		t.Error("padStart: expected error for non-int len")
+	}
+	if _, err := fn([]any{"hi", float64(5), ""}, nil); err == nil {
+		t.Error("padStart: expected error for empty fill")
+	}
+}
+
+func TestPadEnd(t *testing.T) {
+	fn := extstring.PadEnd()
+	cases := []struct {
+		args []any
+		want any
+	}{
+		{[]any{"hi", float64(5)}, "hi   "},
+		{[]any{"hi", float64(5), "0"}, "hi000"},
+		{[]any{"hello", float64(3)}, "hello"},
+		{[]any{"hi", float64(5), "xy"}, "hixyx"},
+	}
+	for _, c := range cases {
+		got, err := fn(c.args, nil)
+		if err != nil {
+			t.Errorf("padEnd %v: unexpected error: %v", c.args, err)
+		}
+		if got != c.want {
+			t.Errorf("padEnd %v: got %v, want %v", c.args, got, c.want)
+		}
+	}
+}
+
+func TestPadEndErrors(t *testing.T) {
+	fn := extstring.PadEnd()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("padEnd: expected error for 0 args")
+	}
+	if _, err := fn([]any{42, float64(5)}, nil); err == nil {
+		t.Error("padEnd: expected error for non-string")
+	}
+	if _, err := fn([]any{"hi", "bad"}, nil); err == nil {
+		t.Error("padEnd: expected error for non-int len")
+	}
+	if _, err := fn([]any{"hi", float64(5), ""}, nil); err == nil {
+		t.Error("padEnd: expected error for empty fill")
+	}
+}
+
+func TestTruncate(t *testing.T) {
+	fn := extstring.Truncate()
+	cases := []struct {
+		args []any
+		want string
+	}{
+		{[]any{"Hello World", float64(5)}, "Hello…"},
+		{[]any{"Hi", float64(10)}, "Hi"},
+		{[]any{"Hello World", float64(5), "..."}, "Hello..."},
+		{[]any{"Hello World", float64(5), ""}, "Hello"},
+	}
+	for _, c := range cases {
+		got, err := fn(c.args, nil)
+		if err != nil {
+			t.Errorf("truncate %v: unexpected error: %v", c.args, err)
+		}
+		if got != c.want {
+			t.Errorf("truncate %v: got %v, want %v", c.args, got, c.want)
+		}
+	}
+}
+
+func TestTruncateErrors(t *testing.T) {
+	fn := extstring.Truncate()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("truncate: expected error for 0 args")
+	}
+	if _, err := fn([]any{42, float64(5)}, nil); err == nil {
+		t.Error("truncate: expected error for non-string")
+	}
+	if _, err := fn([]any{"hi", "bad"}, nil); err == nil {
+		t.Error("truncate: expected error for non-int len")
+	}
+	if _, err := fn([]any{"hi", float64(5), 42}, nil); err == nil {
+		t.Error("truncate: expected error for non-string suffix")
+	}
+}
+
+func TestSlugify(t *testing.T) {
+	fn := extstring.Slugify()
+	cases := []struct {
+		input string
+		want  string
+	}{
+		{"Hello World", "hello-world"},
+		{"  Foo  Bar  ", "foo-bar"},
+		{"It's a Test!", "it-s-a-test"},
+		{"already-slug", "already-slug"},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{c.input}, nil)
+		if err != nil {
+			t.Errorf("slugify %q: unexpected error: %v", c.input, err)
+		}
+		if got != c.want {
+			t.Errorf("slugify %q: got %v, want %v", c.input, got, c.want)
+		}
+	}
+}
+
+func TestSlugifyErrors(t *testing.T) {
+	fn := extstring.Slugify()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("slugify: expected error for 0 args")
+	}
+	if _, err := fn([]any{42}, nil); err == nil {
+		t.Error("slugify: expected error for non-string")
+	}
+}
+
+func TestCountOccurrences(t *testing.T) {
+	fn := extstring.CountOccurrences()
+	cases := []struct {
+		str  string
+		sub  string
+		want float64
+	}{
+		{"hello hello hello", "hello", 3},
+		{"banana", "an", 2},
+		{"abc", "xyz", 0},
+		{"abc", "", 0},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{c.str, c.sub}, nil)
+		if err != nil {
+			t.Errorf("countOccurrences: unexpected error: %v", err)
+		}
+		if got != c.want {
+			t.Errorf("countOccurrences(%q, %q): got %v, want %v", c.str, c.sub, got, c.want)
+		}
+	}
+}
+
+func TestCountOccurrencesErrors(t *testing.T) {
+	fn := extstring.CountOccurrences()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("countOccurrences: expected error for 0 args")
+	}
+	if _, err := fn([]any{42, "x"}, nil); err == nil {
+		t.Error("countOccurrences: expected error for non-string first arg")
+	}
+}
+
+func TestInitials(t *testing.T) {
+	fn := extstring.Initials()
+	cases := []struct {
+		args []any
+		want string
+	}{
+		{[]any{"John Doe"}, "JD"},
+		{[]any{"John Doe", "."}, "J.D"},
+		{[]any{"alice bob charlie"}, "ABC"},
+		{[]any{""}, ""},
+	}
+	for _, c := range cases {
+		got, err := fn(c.args, nil)
+		if err != nil {
+			t.Errorf("initials %v: unexpected error: %v", c.args, err)
+		}
+		if got != c.want {
+			t.Errorf("initials %v: got %v, want %v", c.args, got, c.want)
+		}
+	}
+}
+
+func TestInitialsErrors(t *testing.T) {
+	fn := extstring.Initials()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("initials: expected error for 0 args")
+	}
+	if _, err := fn([]any{42}, nil); err == nil {
+		t.Error("initials: expected error for non-string")
+	}
+	if _, err := fn([]any{"hi", 42}, nil); err == nil {
+		t.Error("initials: expected error for non-string sep")
+	}
+}
+
+func TestEscapeHTML(t *testing.T) {
+	fn := extstring.EscapeHTML()
+	got, err := fn([]any{"<div class=\"test\">Hello & World</div>"}, nil)
+	if err != nil {
+		t.Errorf("escapeHTML: unexpected error: %v", err)
+	}
+	want := "&lt;div class=&#34;test&#34;&gt;Hello &amp; World&lt;/div&gt;"
+	if got != want {
+		t.Errorf("escapeHTML: got %v, want %v", got, want)
+	}
+}
+
+func TestEscapeHTMLErrors(t *testing.T) {
+	fn := extstring.EscapeHTML()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("escapeHTML: expected error for 0 args")
+	}
+	if _, err := fn([]any{42}, nil); err == nil {
+		t.Error("escapeHTML: expected error for non-string")
+	}
+}
+
+func TestUnescapeHTML(t *testing.T) {
+	fn := extstring.UnescapeHTML()
+	got, err := fn([]any{"&lt;b&gt;Hello &amp; World&lt;/b&gt;"}, nil)
+	if err != nil {
+		t.Errorf("unescapeHTML: unexpected error: %v", err)
+	}
+	if got != "<b>Hello & World</b>" {
+		t.Errorf("unescapeHTML: got %v", got)
+	}
+}
+
+func TestUnescapeHTMLErrors(t *testing.T) {
+	fn := extstring.UnescapeHTML()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("unescapeHTML: expected error for 0 args")
+	}
+	if _, err := fn([]any{42}, nil); err == nil {
+		t.Error("unescapeHTML: expected error for non-string")
+	}
+}
+
+func TestReverseWords(t *testing.T) {
+	fn := extstring.ReverseWords()
+	cases := []struct {
+		input string
+		want  string
+	}{
+		{"hello world foo", "foo world hello"},
+		{"one", "one"},
+		{"", ""},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{c.input}, nil)
+		if err != nil {
+			t.Errorf("reverseWords %q: unexpected error: %v", c.input, err)
+		}
+		if got != c.want {
+			t.Errorf("reverseWords %q: got %v, want %v", c.input, got, c.want)
+		}
+	}
+}
+
+func TestReverseWordsErrors(t *testing.T) {
+	fn := extstring.ReverseWords()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("reverseWords: expected error for 0 args")
+	}
+	if _, err := fn([]any{42}, nil); err == nil {
+		t.Error("reverseWords: expected error for non-string")
+	}
+}
+
+func TestLevenshtein(t *testing.T) {
+	fn := extstring.Levenshtein()
+	cases := []struct {
+		a, b string
+		want float64
+	}{
+		{"kitten", "sitting", 3},
+		{"", "abc", 3},
+		{"abc", "", 3},
+		{"abc", "abc", 0},
+		{"abc", "abd", 1},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{c.a, c.b}, nil)
+		if err != nil {
+			t.Errorf("levenshtein(%q,%q): unexpected error: %v", c.a, c.b, err)
+		}
+		if got != c.want {
+			t.Errorf("levenshtein(%q,%q): got %v, want %v", c.a, c.b, got, c.want)
+		}
+	}
+}
+
+func TestLevenshteinErrors(t *testing.T) {
+	fn := extstring.Levenshtein()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("levenshtein: expected error for 0 args")
+	}
+	if _, err := fn([]any{42, "b"}, nil); err == nil {
+		t.Error("levenshtein: expected error for non-string first arg")
+	}
+}
+
+func TestLongestCommonPrefix(t *testing.T) {
+	fn := extstring.LongestCommonPrefix()
+	cases := []struct {
+		strs []any
+		want string
+	}{
+		{[]any{"flower", "flow", "flight"}, "fl"},
+		{[]any{"dog", "racecar", "car"}, ""},
+		{[]any{"abc", "abcd", "abce"}, "abc"},
+		{[]any{}, ""},
+	}
+	for _, c := range cases {
+		got, err := fn([]any{c.strs}, nil)
+		if err != nil {
+			t.Errorf("longestCommonPrefix: unexpected error: %v", err)
+		}
+		if got != c.want {
+			t.Errorf("longestCommonPrefix(%v): got %v, want %v", c.strs, got, c.want)
+		}
+	}
+}
+
+func TestLongestCommonPrefixErrors(t *testing.T) {
+	fn := extstring.LongestCommonPrefix()
+	if _, err := fn([]any{}, nil); err == nil {
+		t.Error("longestCommonPrefix: expected error for 0 args")
+	}
+	if _, err := fn([]any{"not-an-array"}, nil); err == nil {
+		t.Error("longestCommonPrefix: expected error for non-array")
+	}
+	if _, err := fn([]any{[]any{"valid", 42}}, nil); err == nil {
+		t.Error("longestCommonPrefix: expected error for non-string element")
+	}
+}

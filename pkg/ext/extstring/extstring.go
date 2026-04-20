@@ -3,22 +3,34 @@
 //
 // Functions
 //
-//   - $startsWith(str, prefix)   – true if str starts with prefix
-//   - $endsWith(str, suffix)     – true if str ends with suffix
-//   - $indexOf(str, search [, start]) – first index of search (-1 if not found)
-//   - $lastIndexOf(str, search)  – last index of search (-1 if not found)
-//   - $capitalize(str)           – uppercase first char, lowercase rest
-//   - $titleCase(str)            – uppercase first char of each word
-//   - $camelCase(str)            – convert to camelCase
-//   - $snakeCase(str)            – convert to snake_case
-//   - $kebabCase(str)            – convert to kebab-case
-//   - $repeat(str, n)            – repeat str n times
-//   - $words(str)                – split into array of words
-//   - $template(str, bindings)   – replace {{key}} placeholders
+//   - $startsWith(str, prefix)            – true if str starts with prefix
+//   - $endsWith(str, suffix)              – true if str ends with suffix
+//   - $indexOf(str, search [, start])     – first index of search (-1 if not found)
+//   - $lastIndexOf(str, search)           – last index of search (-1 if not found)
+//   - $capitalize(str)                    – uppercase first char, lowercase rest
+//   - $titleCase(str)                     – uppercase first char of each word
+//   - $camelCase(str)                     – convert to camelCase
+//   - $snakeCase(str)                     – convert to snake_case
+//   - $kebabCase(str)                     – convert to kebab-case
+//   - $repeat(str, n)                     – repeat str n times
+//   - $words(str)                         – split into array of words
+//   - $template(str, bindings)            – replace {{key}} placeholders
+//   - $padStart(str, len [, fill])        – left-pad to length
+//   - $padEnd(str, len [, fill])          – right-pad to length
+//   - $truncate(str, len [, suffix])      – truncate to len chars with optional suffix
+//   - $slugify(str)                       – URL-friendly slug
+//   - $countOccurrences(str, sub)         – count non-overlapping occurrences
+//   - $initials(str [, sep])              – initials from words, joined by sep
+//   - $escapeHTML(str)                    – escape HTML special characters
+//   - $unescapeHTML(str)                  – unescape HTML entities
+//   - $reverseWords(str)                  – reverse the order of words
+//   - $levenshtein(a, b)                  – edit distance between two strings
+//   - $longestCommonPrefix(strs)          – longest common prefix of an array
 package extstring
 
 import (
 	"fmt"
+	"html"
 	"regexp"
 	"strings"
 	"unicode"
@@ -28,25 +40,37 @@ import (
 )
 
 var (
-	splitWordsRe = regexp.MustCompile(`[_\-\s]+|([a-z])([A-Z])`)
-	templateRe   = regexp.MustCompile(`\{\{(\w+)\}\}`)
+	splitWordsRe  = regexp.MustCompile(`[_\-\s]+|([a-z])([A-Z])`)
+	templateRe    = regexp.MustCompile(`\{\{(\w+)\}\}`)
+	slugifyNonAlNum = regexp.MustCompile(`[^a-z0-9]+`)
 )
 
 // All returns a map of all extended string functions.
 func All() map[string]gnata.CustomFunc {
 	return map[string]gnata.CustomFunc{
-		"startsWith":  StartsWith(),
-		"endsWith":    EndsWith(),
-		"indexOf":     IndexOf(),
-		"lastIndexOf": LastIndexOf(),
-		"capitalize":  Capitalize(),
-		"titleCase":   TitleCase(),
-		"camelCase":   CamelCase(),
-		"snakeCase":   SnakeCase(),
-		"kebabCase":   KebabCase(),
-		"repeat":      Repeat(),
-		"words":       Words(),
-		"template":    Template(),
+		"startsWith":         StartsWith(),
+		"endsWith":           EndsWith(),
+		"indexOf":            IndexOf(),
+		"lastIndexOf":        LastIndexOf(),
+		"capitalize":         Capitalize(),
+		"titleCase":          TitleCase(),
+		"camelCase":          CamelCase(),
+		"snakeCase":          SnakeCase(),
+		"kebabCase":          KebabCase(),
+		"repeat":             Repeat(),
+		"words":              Words(),
+		"template":           Template(),
+		"padStart":           PadStart(),
+		"padEnd":             PadEnd(),
+		"truncate":           Truncate(),
+		"slugify":            Slugify(),
+		"countOccurrences":   CountOccurrences(),
+		"initials":           Initials(),
+		"escapeHTML":         EscapeHTML(),
+		"unescapeHTML":       UnescapeHTML(),
+		"reverseWords":       ReverseWords(),
+		"levenshtein":        Levenshtein(),
+		"longestCommonPrefix": LongestCommonPrefix(),
 	}
 }
 
@@ -292,6 +316,319 @@ func Template() gnata.CustomFunc {
 			return match
 		})
 		return result, nil
+	}
+}
+
+// PadStart returns the CustomFunc for $padStart(str, len [, fill]).
+// Left-pads str to length using fill (default " ").
+func PadStart() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$padStart: requires at least 2 arguments")
+		}
+		str, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$padStart: first argument must be a string")
+		}
+		padLen, ok := extutil.ToInt(args[1])
+		if !ok || padLen < 0 {
+			return nil, fmt.Errorf("$padStart: len must be a non-negative integer")
+		}
+		fill := " "
+		if len(args) >= 3 && args[2] != nil {
+			f, ok := args[2].(string)
+			if !ok || f == "" {
+				return nil, fmt.Errorf("$padStart: fill must be a non-empty string")
+			}
+			fill = f
+		}
+		runes := []rune(str)
+		needed := padLen - len(runes)
+		if needed <= 0 {
+			return str, nil
+		}
+		fillRunes := []rune(fill)
+		var pad []rune
+		for len(pad) < needed {
+			pad = append(pad, fillRunes...)
+		}
+		return string(pad[:needed]) + str, nil
+	}
+}
+
+// PadEnd returns the CustomFunc for $padEnd(str, len [, fill]).
+// Right-pads str to length using fill (default " ").
+func PadEnd() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$padEnd: requires at least 2 arguments")
+		}
+		str, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$padEnd: first argument must be a string")
+		}
+		padLen, ok := extutil.ToInt(args[1])
+		if !ok || padLen < 0 {
+			return nil, fmt.Errorf("$padEnd: len must be a non-negative integer")
+		}
+		fill := " "
+		if len(args) >= 3 && args[2] != nil {
+			f, ok := args[2].(string)
+			if !ok || f == "" {
+				return nil, fmt.Errorf("$padEnd: fill must be a non-empty string")
+			}
+			fill = f
+		}
+		runes := []rune(str)
+		needed := padLen - len(runes)
+		if needed <= 0 {
+			return str, nil
+		}
+		fillRunes := []rune(fill)
+		var pad []rune
+		for len(pad) < needed {
+			pad = append(pad, fillRunes...)
+		}
+		return str + string(pad[:needed]), nil
+	}
+}
+
+// Truncate returns the CustomFunc for $truncate(str, len [, suffix]).
+// Truncates str to at most len runes; if truncated, appends suffix (default "…").
+func Truncate() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$truncate: requires at least 2 arguments")
+		}
+		str, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$truncate: first argument must be a string")
+		}
+		truncLen, ok := extutil.ToInt(args[1])
+		if !ok || truncLen < 0 {
+			return nil, fmt.Errorf("$truncate: len must be a non-negative integer")
+		}
+		suffix := "…"
+		if len(args) >= 3 && args[2] != nil {
+			s, ok := args[2].(string)
+			if !ok {
+				return nil, fmt.Errorf("$truncate: suffix must be a string")
+			}
+			suffix = s
+		}
+		runes := []rune(str)
+		if len(runes) <= truncLen {
+			return str, nil
+		}
+		return string(runes[:truncLen]) + suffix, nil
+	}
+}
+
+// Slugify returns the CustomFunc for $slugify(str).
+// Converts str to a URL-friendly lowercase slug (letters, digits, hyphens).
+func Slugify() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$slugify: requires 1 argument")
+		}
+		str, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$slugify: argument must be a string")
+		}
+		slug := strings.ToLower(str)
+		slug = slugifyNonAlNum.ReplaceAllString(slug, "-")
+		slug = strings.Trim(slug, "-")
+		return slug, nil
+	}
+}
+
+// CountOccurrences returns the CustomFunc for $countOccurrences(str, sub).
+// Returns the number of non-overlapping occurrences of sub in str.
+func CountOccurrences() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$countOccurrences: requires 2 arguments")
+		}
+		str, ok1 := args[0].(string)
+		sub, ok2 := args[1].(string)
+		if !ok1 || !ok2 {
+			return nil, fmt.Errorf("$countOccurrences: arguments must be strings")
+		}
+		if sub == "" {
+			return float64(0), nil
+		}
+		return float64(strings.Count(str, sub)), nil
+	}
+}
+
+// Initials returns the CustomFunc for $initials(str [, sep]).
+// Returns the initials of each word joined by sep (default "").
+func Initials() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$initials: requires at least 1 argument")
+		}
+		str, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$initials: argument must be a string")
+		}
+		sep := ""
+		if len(args) >= 2 && args[1] != nil {
+			s, ok := args[1].(string)
+			if !ok {
+				return nil, fmt.Errorf("$initials: sep must be a string")
+			}
+			sep = s
+		}
+		words := strings.Fields(str)
+		inits := make([]string, 0, len(words))
+		for _, w := range words {
+			runes := []rune(w)
+			if len(runes) > 0 {
+				inits = append(inits, string(unicode.ToUpper(runes[0])))
+			}
+		}
+		return strings.Join(inits, sep), nil
+	}
+}
+
+// EscapeHTML returns the CustomFunc for $escapeHTML(str).
+// Escapes &, <, >, ", ' to HTML entities.
+func EscapeHTML() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$escapeHTML: requires 1 argument")
+		}
+		str, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$escapeHTML: argument must be a string")
+		}
+		return html.EscapeString(str), nil
+	}
+}
+
+// UnescapeHTML returns the CustomFunc for $unescapeHTML(str).
+// Unescapes HTML entities back to their characters.
+func UnescapeHTML() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$unescapeHTML: requires 1 argument")
+		}
+		str, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$unescapeHTML: argument must be a string")
+		}
+		return html.UnescapeString(str), nil
+	}
+}
+
+// ReverseWords returns the CustomFunc for $reverseWords(str).
+// Reverses the order of whitespace-separated words.
+func ReverseWords() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$reverseWords: requires 1 argument")
+		}
+		str, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("$reverseWords: argument must be a string")
+		}
+		words := strings.Fields(str)
+		for i, j := 0, len(words)-1; i < j; i, j = i+1, j-1 {
+			words[i], words[j] = words[j], words[i]
+		}
+		return strings.Join(words, " "), nil
+	}
+}
+
+// Levenshtein returns the CustomFunc for $levenshtein(a, b).
+// Returns the edit distance (insertions, deletions, substitutions) between a and b.
+func Levenshtein() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("$levenshtein: requires 2 arguments")
+		}
+		a, ok1 := args[0].(string)
+		b, ok2 := args[1].(string)
+		if !ok1 || !ok2 {
+			return nil, fmt.Errorf("$levenshtein: arguments must be strings")
+		}
+		ra, rb := []rune(a), []rune(b)
+		la, lb := len(ra), len(rb)
+		if la == 0 {
+			return float64(lb), nil
+		}
+		if lb == 0 {
+			return float64(la), nil
+		}
+		prev := make([]int, lb+1)
+		curr := make([]int, lb+1)
+		for j := 0; j <= lb; j++ {
+			prev[j] = j
+		}
+		for i := 1; i <= la; i++ {
+			curr[0] = i
+			for j := 1; j <= lb; j++ {
+				cost := 1
+				if ra[i-1] == rb[j-1] {
+					cost = 0
+				}
+				del := prev[j] + 1
+				ins := curr[j-1] + 1
+				sub := prev[j-1] + cost
+				m := del
+				if ins < m {
+					m = ins
+				}
+				if sub < m {
+					m = sub
+				}
+				curr[j] = m
+			}
+			prev, curr = curr, prev
+		}
+		return float64(prev[lb]), nil
+	}
+}
+
+// LongestCommonPrefix returns the CustomFunc for $longestCommonPrefix(strs).
+// Returns the longest string that is a prefix of all strings in the array.
+func LongestCommonPrefix() gnata.CustomFunc {
+	return func(args []any, _ any) (any, error) {
+		if len(args) < 1 {
+			return nil, fmt.Errorf("$longestCommonPrefix: requires 1 argument")
+		}
+		arr, ok := args[0].([]any)
+		if !ok {
+			return nil, fmt.Errorf("$longestCommonPrefix: argument must be an array")
+		}
+		if len(arr) == 0 {
+			return "", nil
+		}
+		strings_ := make([]string, 0, len(arr))
+		for _, v := range arr {
+			s, ok := v.(string)
+			if !ok {
+				return nil, fmt.Errorf("$longestCommonPrefix: all elements must be strings")
+			}
+			strings_ = append(strings_, s)
+		}
+		prefix := []rune(strings_[0])
+		for _, s := range strings_[1:] {
+			sr := []rune(s)
+			max := len(prefix)
+			if len(sr) < max {
+				max = len(sr)
+			}
+			prefix = prefix[:max]
+			for i := range prefix {
+				if prefix[i] != sr[i] {
+					prefix = prefix[:i]
+					break
+				}
+			}
+		}
+		return string(prefix), nil
 	}
 }
 
